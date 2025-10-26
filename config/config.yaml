@@ -1,48 +1,52 @@
-# capture-hic-pipeline/config/config.yaml
-datadir: "data"         # optional if you later refer to raw inputs
-outdir:  "results"
+outdir: "results"
 
-genome_build: "mm10"    # for documentation; not used directly yet
-enzyme: "HindIII"
-
+# Restriction design (kept unchanged)
 design:
-  rmap:      "design/mm10_HindIII/mm10_HindIII.rmap"
-  baitmap:   "design/mm10_HindIII/mm10_HindIII.baitmap"
-  probeinfo: "design/mm10_HindIII/mm10_HindIII_ProbeInfo.txt"
+  dir: "design/mm10_HindIII"
+  rmap: "design/mm10_HindIII/MM10_HindIII.rmap"
+  baitmap: "design/mm10_HindIII/MM10_HindIII.baitmap"
+  probeinfo: "design/mm10_HindIII/MM10_HindIII_ProbeInfo.txt"
 
-hicup:
-  config: "config/hicup.config"          # your HiCUP .conf
-  digest: "design/mm10_HindIII/mm10_HindIII_digest.txt"  # or wherever it lives
-
+# Per-sample FASTQs (absolute or relative paths). Add as many samples as you like.
 samples:
-  - SampleA
-  - SampleB
+  SampleA:
+    r1: "data/SampleA_R1.fastq.gz"
+    r2: "data/SampleA_R2.fastq.gz"
+  SampleB:
+    r1: "data/SampleB_R1.fastq.gz"
+    r2: "data/SampleB_R2.fastq.gz"
+
+# HiCUP + mapping settings
+hicup:
+  bowtie2_bin: "/usr/bin/bowtie2"          # full path to bowtie2 executable
+  index: "/refs/bowtie2/mm10"              # bowtie2 index basename (no .bt2 suffix)
+  digest: "design/mm10_HindIII/mm10_HindIII_digest.txt"
+  threads: 10
+  zip: 1                                   # 1=compress outputs, 0=don’t
+  keep: 0                                  # 1=keep intermediates
+  quiet: 1                                 # 1=suppress progress
+  longest: 2000
+  shortest: 100
+  format: ""                               # usually let HiCUP auto-detect
 
 tools:
   rscript: "Rscript"
-  hicup: "hicup"                          # assumes in PATH; otherwise give full path
-  bedtools: "bedtools"                    # we’ll use `bedtools bamtobed`
+  hicup: "hicup"                           # in PATH or full path
+  bedtools: "bedtools"
   perl: "perl"
-  bam_to_fragments: "scripts/BamToFragments.pl"  # keep it in repo if possible
-  python: "python"  # if you want to build the design with ChicagoTools
-  chicago_bam2chicago: "chicagoTools/bam2chicago.sh"           # optional
-  chicago_make_design: "chicagoTools/makeDesignFiles_py3.py"   # optional
-  align2ibed: "scripts/align2ibed.pl"   # put align2ibed.pl in your repo, or give full path
-  java: "java"                              # Java runtime
-  juicer_tools: "juicer_tools.jar"          # full path to your Juicer Tools JAR
-  bam2juicer: "scripts/Bam2Juicer.pl"       # path to Bam2Juicer.pl
-
-chicago:
-  force_make_design: false   # true/false
-#If you don’t want to rely on chicagoTools, keep the .chinput creation step elsewhere and point the script to existing .chinput in the sample’s output dir.
+  bam_to_fragments: "scripts/BamToFragments.pl"
+  bam2juicer: "scripts/Bam2Juicer.pl"
+  align2ibed: "scripts/align2ibed.pl"
+  java: "java"
+  juicer_tools: "juicer_tools.jar"
 
 params:
+  juicer_mem_gb: 10
+  juicer_q: 10
+  juicer_genome_id: "mm10"
   fanc_resolution: "10kb"
   fanc_balancing: "KR"
   fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
-  juicer_mem_gb: 10                         # -Xmx memory in GB
-  juicer_q: 10                              # pre -q value
-  juicer_genome_id: "mm10"                  # genome ID for .hic (e.g., mm10, hg19, hg38)
 
 threads:
   default: 4

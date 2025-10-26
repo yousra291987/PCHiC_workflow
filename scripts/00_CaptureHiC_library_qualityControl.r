@@ -30,7 +30,7 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 # Basic checks
-req <- c("output","sample","hicup_config","digest","hicup_bin",
+req <- c("output","sample","hicup_config","hicup_bin",
          "bedtools_bin","perl_bin","bam_to_fragments","mapped_bam","bed_out","mat_out",
          "rmap","baitmap")
 missing <- req[!nzchar(unlist(opt[req]))]
@@ -48,8 +48,8 @@ message(">> Running HiCUP QC/mapping for sample: ", sample)
 # 1) Run HiCUP
 # Note: We pass both --config and --digest explicitly.
 # HiCUP usually writes outputs into a subdir per config; we will glob afterwards.
-hicup_cmd <- sprintf('%s --config "%s" --digest "%s"',
-                     opt$hicup_bin, opt$hicup_config, opt$digest)
+# Build HiCUP cmd WITHOUT forcing --digest (it’s in the config):
+hicup_cmd <- sprintf('%s --config "%s"', opt$hicup_bin, opt$hicup_config)
 message("   [HiCUP] ", hicup_cmd)
 status <- system(hicup_cmd)
 if (status != 0) stop("HiCUP failed with status: ", status)
