@@ -20,7 +20,7 @@ during her work on chromatin architecture and enhancer regulation.
 | **1. HiCUP QC** | Maps paired reads, filters invalid di-tags | [`HiCUP`](https://www.bioinformatics.babraham.ac.uk/projects/hicup/) |
 | **2. Capture Efficiency** | Computes P0/P1/P2 statistics from `.mat` | R / data.table |
 | **3. Chicago** | Detects significant promoter interactions | [`Chicago`](https://bioconductor.org/packages/release/bioc/html/Chicago.html) |
-| **4. ChiCMaxima** | Generates interaction BED (IBED) for visualization | [`ChiCMaxima`](https://github.com/gs-raj/ChiCMaxima) |
+| **4. ChiCMaxima** | Generates interaction BED (IBED) for visualization | [`ChiCMaxima`](https://github.com/yousra291987/ChiCMaxima) |
 | **5. Hi-C generation** | Converts matrices to `.hic` for Juicebox / Arrowhead | [`juicer_tools`](https://github.com/aidenlab/juicer/wiki/Juicer-Tools-Quick-Start) |
 | **6. Insulation Score** | Calculates domain insulation using FAN-C | [`FAN-C`](https://github.com/vaquerizaslab/fanc) |
 
@@ -89,8 +89,8 @@ You can create them manually or let Snakemake handle them automatically.
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/<your_username>/CaptureHiC-pipeline.git
-   cd CaptureHiC-pipeline
+   git clone https://github.com/yousra291987/PCHiC_workflow.git
+   cd PCHiC_workflow
    
 2. **Install conda (if not available)**
    ```bash 
@@ -138,6 +138,26 @@ juicer_genome_id: "mm10"
 fanc_resolution: "10kb"
 fanc_balancing: "KR"
 fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
+```
+## 🧬 Adjusting the configuration for your data
+Before running the workflow, open the file config/config.yaml and update it with your own paths:
+Under the samples: section, specify the absolute or relative paths to your paired-end FASTQ files (r1 and r2) for each sample.
+Update the hicup: section with the correct paths to your Bowtie2 binary, Bowtie2 index, and genome digest file corresponding to your restriction enzyme and genome assembly.
+You can add multiple samples; the pipeline will automatically process each in parallel.
+```yaml
+Example:
+samples:
+  MySample01:
+    r1: "data/MySample01_R1.fastq.gz"
+    r2: "data/MySample01_R2.fastq.gz"
+  MySample02:
+    r1: "data/MySample02_R1.fastq.gz"
+    r2: "data/MySample02_R2.fastq.gz"
+
+hicup:
+  bowtie2_bin: "/usr/bin/bowtie2"
+  index: "/refs/bowtie2/mm10"
+  digest: "design/mm10_HindIII/mm10_HindIII_digest.txt"
 ```
 
 ## 🚀 Running the Pipeline
