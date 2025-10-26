@@ -94,3 +94,14 @@ desktop.ini
 # ---- Miscellaneous ----
 nohup.out
 *.ipynb_checkpoints
+
+# large/raw data
+Output_Test_data/
+*.fastq
+*.fastq.gz
+*.fq
+*.fq.gz
+
+# huge design binaries
+design/mm10_HindIII/*.nbpb
+design/mm10_HindIII/*.poe
