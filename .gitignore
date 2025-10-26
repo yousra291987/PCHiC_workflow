@@ -1,0 +1,96 @@
+# ================================
+#  Capture-HiC Pipeline .gitignore
+# ================================
+
+# ---- Snakemake / workflow outputs ----
+# Flag and Rout folders
+flags/
+Rout/
+results/
+output/
+*.log
+*.html
+*.pdf
+*.png
+*.svg
+*.hic
+*.ibed
+*.mat
+*.bed
+*.bam
+*.bai
+*.fastq
+*.fq
+*.sam
+*.gz
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.tmp
+*.bak
+*.swp
+*.Rout
+*.RData
+*.Rhistory
+*.Rproj.user/
+
+# ---- Conda / virtual environments ----
+.env/
+.venv/
+conda-env/
+envs/
+__pycache__/
+*.pyc
+*.pyo
+
+# ---- Temporary Snakemake files ----
+.snakemake/
+.snakejob.*
+.snakefmt.*
+*.snakemake_timestamp
+*.snakemake_lock
+*snakemake.log
+*.snakemake_metadata
+
+# ---- Configuration and secrets ----
+config/*.local.yaml
+config/*.private.yaml
+config/*.backup.yaml
+
+# ---- Logs and reports ----
+*.log
+*.err
+*.out
+logs/
+reports/
+pipeline_report.html
+
+# ---- IDE / Editor files ----
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+.vscode/
+.idea/
+*.code-workspace
+
+# ---- OS / system files ----
+.DS_Store
+Thumbs.db
+desktop.ini
+*.tmp
+*.bak
+*.swp
+
+# ---- Compressed archives ----
+*.tar
+*.tar.gz
+*.zip
+*.gz
+*.bz2
+
+# ---- Miscellaneous ----
+nohup.out
+*.ipynb_checkpoints
