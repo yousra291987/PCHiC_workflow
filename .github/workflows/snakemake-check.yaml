@@ -22,10 +22,18 @@ jobs:
         with:
           micromamba-version: "latest"
           environment-name: snakemake-ci
+          # Tell micromamba where to find packages
+          condarc: |
+            channels:
+              - conda-forge
+              - bioconda
+              - defaults
+            channel_priority: strict
+          # Create env with the tools you need
           create-args: >-
             python=3.11
-            snakemake
-            snakefmt
+            snakemake-minimal=7.*
+            snakefmt=0.8.*
             pytest
             graphviz
           cache-environment: true
