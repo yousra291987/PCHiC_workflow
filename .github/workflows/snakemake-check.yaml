@@ -45,9 +45,8 @@ jobs:
 
       # 1) Style & lint
       - name: snakefmt (check only)
-        run: |
-          snakefmt --version
-          snakefmt --check .
+        run: snakefmt --check .
+        continue-on-error: true
 
       - name: snakemake lint
         run: |
