@@ -1,0 +1,72 @@
+name: snakemake-check
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Micromamba
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: "latest"
+          environment-name: snakemake-ci
+          create-args: >-
+            python=3.11
+            snakemake
+            snakefmt
+            pytest
+            graphviz
+          cache-environment: true
+
+      - name: Snakemake version
+        run: |
+          snakemake --version
+          python --version
+
+      # 1) Style & lint
+      - name: snakefmt (check only)
+        run: |
+          snakefmt --version
+          snakefmt --check .
+
+      - name: snakemake lint
+        run: |
+          snakemake --lint
+
+      # 2) Dry-run DAG using your config
+      - name: Dry-run DAG
+        run: |
+          snakemake -n --printshellcmds --rerun-incomplete \
+            --cores 1 --use-conda \
+            --configfile config/config.yaml
+
+      # 3) Unit tests (if previously generated and committed)
+      - name: Run unit tests (pytest) if available
+        run: |
+          if [ -d .tests/unit ]; then
+            pytest -q .tests/unit
+          else
+            echo "No .tests/unit found. Generate locally with:"
+            echo "  snakemake --use-conda --configfile config/config.yaml --cores 2 --generate-unit-tests"
+          fi
+
+      # 4) Optional minimal execution on toy data (enable when ready)
+      - name: Minimal end-to-end run (optional)
+        if: ${{ false }}   # set to true once you add tiny test data under assets/
+        uses: snakemake/snakemake-github-action@v2
+        with:
+          snakefile: 'Snakefile'
+          args: '--cores 1 --use-conda --conda-cleanup-pkgs cache --printshellcmds'
+          show-disk-usage-on-error: true
