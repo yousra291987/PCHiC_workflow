@@ -8,7 +8,7 @@
 import os
 from pathlib import Path
 
-# Default for real users; CI will override with --configfile config/config-ci.yaml
+# Default for users; CI overrides with --configfile config/config-ci.yaml
 configfile: "config/config.yaml"
 
 # Accept samples as dict {sample: {...}} or list [sample, ...]
@@ -20,7 +20,6 @@ def _resolve_samples(cfg):
         return s
     return []
 
-# Helper to fetch per-sample metadata safely (works for dict or list configs)
 def _sample_meta(sample_id):
     _s = config.get("samples", {})
     if isinstance(_s, dict):
@@ -33,9 +32,9 @@ THREADS = config.get("threads", {}).get("default", 4)
 
 DESIGN = config.get("design", {})        # rmap, baitmap, probeinfo, dir
 PARAMS = config.get("params", {})
-TOOLS  = config.get("tools", {"rscript": "Rscript"})  # tool paths with safe default
+TOOLS  = config.get("tools", {"rscript": "Rscript"})
 
-## -------------------------------------------------------------------
+# -------------------------------------------------------------------
 # Default targets (precomputed to avoid wildcard inference issues)
 # -------------------------------------------------------------------
 TARGETS = []
@@ -62,11 +61,11 @@ rule hicup_qc:
         rmap      = DESIGN.get("rmap", ""),
         baitmap   = DESIGN.get("baitmap", ""),
     output:
-        hicup_cfg = temp(f"{OUTDIR}/{{{{sample}}}}/hicup_{{{{sample}}}}.config"),
-        rout      = "logs/hicup/{sample}.Rout",
-        bam       = f"{OUTDIR}/{{{{sample}}}}/mapped.bam",
-        bed       = temp(f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.hicup.bed"),
-        mat       = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.mat",
+        hicup_cfg = lambda w: temp(f"{OUTDIR}/{w.sample}/hicup_{w.sample}.config"),
+        rout      = lambda w: f"logs/hicup/{w.sample}.Rout",
+        bam       = lambda w: f"{OUTDIR}/{w.sample}/mapped.bam",
+        bed       = lambda w: temp(f"{OUTDIR}/{w.sample}/{w.sample}.hicup.bed"),
+        mat       = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.mat",
     params:
         outdir     = OUTDIR,
         # HICUP settings with safe defaults
@@ -141,11 +140,11 @@ CFG
 rule capture_efficiency:
     input:
         script = "scripts/00_CaptureHiC_CaptureEfficiency_Control.R",
-        mat    = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.mat",
+        mat    = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.mat",
         prev   = "logs/hicup/{sample}.Rout",
     output:
         rout  = "logs/capture_eff/{sample}.Rout",
-        stats = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}_CaptureEfficiency.stat",
+        stats = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}_CaptureEfficiency.stat",
     params:
         outdir  = OUTDIR,
         rscript = TOOLS.get("rscript","Rscript"),
@@ -174,7 +173,7 @@ rule chicago:
         script  = "scripts/01_Prepare_Chicago.R",
         rmap    = DESIGN.get("rmap", ""),
         baitmap = DESIGN.get("baitmap", ""),
-        bam     = f"{OUTDIR}/{{{{sample}}}}/mapped.bam",
+        bam     = lambda w: f"{OUTDIR}/{w.sample}/mapped.bam",
         prev    = "logs/capture_eff/{sample}.Rout",
     params:
         outdir            = OUTDIR,
@@ -187,7 +186,7 @@ rule chicago:
         rscript           = TOOLS.get("rscript","Rscript"),
     output:
         rout = "logs/chicago/{sample}.Rout",
-        out  = f"{OUTDIR}/{{{{sample}}}}/chicago_interactions.tsv",
+        out  = lambda w: f"{OUTDIR}/{w.sample}/chicago_interactions.tsv",
     threads: THREADS
     conda:
         "envs/chicago.yaml"
@@ -228,7 +227,7 @@ rule chicmaxima:
         align2ibed = TOOLS.get("align2ibed","scripts/align2ibed.pl"),
     output:
         rout = "logs/chicmaxima/{sample}.Rout",
-        ibed = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}_Cis.ibed",
+        ibed = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}_Cis.ibed",
     threads: THREADS
     conda:
         "envs/r.yaml"
@@ -256,8 +255,8 @@ rule hic_and_tads:
     input:
         script = "scripts/03_Generate_hic_and_TADs.R",
         rmap   = DESIGN.get("rmap", ""),
-        mat    = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.mat",
-        bam    = f"{OUTDIR}/{{{{sample}}}}/mapped.bam",  # keeps ordering
+        mat    = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.mat",
+        bam    = lambda w: f"{OUTDIR}/{w.sample}/mapped.bam",
     params:
         outdir     = OUTDIR,
         java_bin   = TOOLS.get("java", "java"),
@@ -270,7 +269,7 @@ rule hic_and_tads:
         rscript    = TOOLS.get("rscript","Rscript"),
     output:
         rout = "logs/hic/{sample}.Rout",
-        hic  = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.hic",
+        hic  = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.hic",
     threads: THREADS
     conda:
         "envs/r.yaml"
@@ -300,18 +299,18 @@ rule hic_and_tads:
 rule insulation:
     input:
         script = "scripts/04_InsulationScore.R",
-        hic    = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.hic",
+        hic    = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.hic",
         prev   = "logs/hic/{sample}.Rout",
     params:
         outdir      = OUTDIR,
         resolution  = PARAMS.get("fanc_resolution", "25kb"),
         balancing   = PARAMS.get("fanc_balancing", "ICE"),
-        windows     = PARAMS.get("fanc_windows", []),  # list
+        windows     = PARAMS.get("fanc_windows", []),
         windows_str = " ".join(PARAMS.get("fanc_windows", [])) if isinstance(PARAMS.get("fanc_windows", []), (list, tuple)) else str(PARAMS.get("fanc_windows", "")),
         rscript     = TOOLS.get("rscript","Rscript"),
     output:
         rout = "logs/insulation/{sample}.Rout",
-        ins  = f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.insulation",
+        ins  = lambda w: f"{OUTDIR}/{w.sample}/{w.sample}.insulation",
     threads: THREADS
     conda:
         "envs/fanc.yaml"
