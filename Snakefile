@@ -35,17 +35,22 @@ DESIGN = config.get("design", {})        # rmap, baitmap, probeinfo, dir
 PARAMS = config.get("params", {})
 TOOLS  = config.get("tools", {"rscript": "Rscript"})  # tool paths with safe default
 
+## -------------------------------------------------------------------
+# Default targets (precomputed to avoid wildcard inference issues)
 # -------------------------------------------------------------------
-# Default targets
-# -------------------------------------------------------------------
+TARGETS = []
+for s in SAMPLES:
+    TARGETS += [
+        f"{OUTDIR}/{s}/{s}.hic",
+        f"{OUTDIR}/{s}/{s}.insulation",
+        f"logs/hicup/{s}.Rout",
+        f"logs/capture_eff/{s}.Rout",
+        f"logs/chicago/{s}.Rout",
+        f"logs/chicmaxima/{s}.Rout",
+    ]
+
 rule all:
-    input:
-        expand(f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.hic",         sample=SAMPLES),
-        expand(f"{OUTDIR}/{{{{sample}}}}/{{{{sample}}}}.insulation",  sample=SAMPLES),
-        expand("logs/hicup/{sample}.Rout",       sample=SAMPLES),
-        expand("logs/capture_eff/{sample}.Rout", sample=SAMPLES),
-        expand("logs/chicago/{sample}.Rout",     sample=SAMPLES),
-        expand("logs/chicmaxima/{sample}.Rout",  sample=SAMPLES),
+    input: TARGETS
 
 # -------------------------------------------------------------------
 # 1) HICUP QC (pure shell so conda is allowed)
