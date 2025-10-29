@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 
 
-configfile: "config/config.yaml"
+#configfile: "config/config.yaml"
 
 
 SAMPLES = list(config["samples"].keys())

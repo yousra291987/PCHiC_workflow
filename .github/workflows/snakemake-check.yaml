@@ -50,7 +50,7 @@ jobs:
 
       - name: snakemake lint
         run: |
-          snakemake --lint
+          snakemake --lint --configfile config/config-ci.yaml
 
       # 2) Dry-run DAG using your config
       - name: Dry-run DAG
