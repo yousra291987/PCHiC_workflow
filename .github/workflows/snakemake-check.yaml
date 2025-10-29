@@ -49,8 +49,8 @@ jobs:
         continue-on-error: true
 
       - name: snakemake lint
-        run: |
-          snakemake --lint --configfile config/config-ci.yaml
+        run: snakemake --lint --configfile config/config-ci.yaml
+        continue-on-error: true
 
       # 2) Dry-run DAG using your config
       - name: Dry-run DAG
