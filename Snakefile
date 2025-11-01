@@ -195,7 +195,18 @@ rule chicago:
         "logs/chicago/{sample}.log",
     shell:
         r"""
+        set -euo pipefail
         mkdir -p logs/chicago
+
+        # Ensure BiocManager and CHiCAGO are present (works on macOS ARM too)
+        {params.rscript} -e 'if (!requireNamespace("BiocManager", quietly=TRUE)) {{
+                               install.packages("BiocManager", repos="https://cloud.r-project.org")
+                             }}
+                             if (!requireNamespace("Chicago", quietly=TRUE)) {{
+                               BiocManager::install("Chicago", ask=FALSE, update=FALSE)
+                             }}' >> {log} 2>&1
+
+        # Run your pipeline step
         {params.rscript} "{input.script}" \
           --dir "{params.outdir}/{wildcards.sample}" \
           --sample "{wildcards.sample}" \
@@ -208,10 +219,10 @@ rule chicago:
           --make_design "{params.make_design}" \
           --python "{params.python_bin}" \
           --force_make_design {params.force_flag} \
-          > {log} 2>&1
+          >> {log} 2>&1
+
         echo "OK" > {output.rout}
         """
-
 # -------------------------------------------------------------------
 # 4) ChiCMaxima interaction calling
 # -------------------------------------------------------------------
