@@ -123,7 +123,7 @@ rule hicup_qc:
     output:
         rout      = "logs/hicup/{sample}.Rout",
         bam       = OUTDIR + "/{sample}/mapped.bam",
-        bed       = temp(OUTDIR + "/{sample}/{sample}.hicup.bed"),
+        bed       = OUTDIR + "/{sample}/{sample}.hicup.bed",
         mat       = OUTDIR + "/{sample}/{sample}.mat",
     params:
         outdir     = OUTDIR,
