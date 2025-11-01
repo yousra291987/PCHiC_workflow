@@ -2,10 +2,10 @@ outdir: "results"
 
 # Restriction design (kept unchanged)
 design:
-  dir: "design/mm10_HindIII"
-  rmap: "design/mm10_HindIII/MM10_HindIII.rmap"
-  baitmap: "design/mm10_HindIII/MM10_HindIII.baitmap"
-  probeinfo: "design/mm10_HindIII/MM10_HindIII_ProbeInfo.txt"
+  dir: "design/MM10_HindIII"
+  rmap: "design/MM10_HindIII/MM10_HindIII.rmap"
+  baitmap: "design/MM10_HindIII/MM10_HindIII.baitmap"
+  probeinfo: "design/MM10_HindIII/MM10_HindIII_ProbeInfo.txt"
 
 # Per-sample FASTQs (absolute or relative paths). Add as many samples as you like.
 samples:
@@ -15,16 +15,16 @@ samples:
 
 # HiCUP + mapping settings
 hicup:
-  bowtie2_bin: "/usr/bin/bowtie2"          # full path to bowtie2 executable
-  index: "/refs/bowtie2/mm10"              # bowtie2 index basename (no .bt2 suffix)
-  digest: "design/mm10_HindIII/mm10_HindIII_digest.txt"
-  threads: 10
-  zip: 1                                   # 1=compress outputs, 0=don’t
-  keep: 0                                  # 1=keep intermediates
-  quiet: 1                                 # 1=suppress progress
+  bowtie2_bin: "/usr/bin/bowtie2"                 # or env path
+  index: "design/MM10_HindIII/mm10"               # prefix (no .bt2)
+  digest: "design/MM10_HindIII/MM10_HindIII_digest.txt"
+  format: ""                                      # let HiCUP auto-detect
   longest: 2000
   shortest: 100
-  format: ""                               # usually let HiCUP auto-detect
+  threads: 4
+  quiet: 1
+  keep: 0
+  zip: 0
 
 tools:
   rscript: "Rscript"
