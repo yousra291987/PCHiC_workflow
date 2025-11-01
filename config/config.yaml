@@ -9,9 +9,9 @@ design:
 
 # Per-sample FASTQs (absolute or relative paths). Add as many samples as you like.
 samples:
-  Sample:
-    r1: "data/SampleA_R1.fastq.gz"
-    r2: "data/SampleA_R2.fastq.gz"
+  CI1:
+    r1: "data/CI1_R1.fastq.gz"
+    r2: "data/CI1_R2.fastq.gz"
 
 # HiCUP + mapping settings
 hicup:

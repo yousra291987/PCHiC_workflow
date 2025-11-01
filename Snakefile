@@ -115,7 +115,7 @@ CFG
 # -------------------------------------------------------------------
 rule hicup_qc:
     input:
-        script    = "scripts/00_CaptureHiC_library_qualityControl.R",
+        script    = "scripts/00_CaptureHiC_library_qualityControl.r",
         probeinfo = DESIGN.get("probeinfo", ""),
         rmap      = DESIGN.get("rmap", ""),
         baitmap   = DESIGN.get("baitmap", ""),
@@ -166,7 +166,7 @@ rule hicup_qc:
 # -------------------------------------------------------------------
 rule capture_efficiency:
     input:
-        script = "scripts/00_CaptureHiC_CaptureEfficiency_Control.R",
+        script = "scripts/00_CaptureHiC_CaptureEfficiency_Control.r",
         mat    = OUTDIR + "/{sample}/{sample}.mat",
         prev   = "logs/hicup/{sample}.Rout",
     output:
@@ -197,7 +197,7 @@ rule capture_efficiency:
 # -------------------------------------------------------------------
 rule chicago:
     input:
-        script  = "scripts/01_Prepare_Chicago.R",
+        script  = "scripts/01_Prepare_Chicago.r",
         rmap    = DESIGN.get("rmap", ""),
         baitmap = DESIGN.get("baitmap", ""),
         bam     = OUTDIR + "/{sample}/mapped.bam",
@@ -254,7 +254,7 @@ rule chicago:
 # -------------------------------------------------------------------
 rule chicmaxima:
     input:
-        script  = "scripts/02_ChiCMaxima.R",
+        script  = "scripts/02_ChiCMaxima.r",
         rmap    = DESIGN.get("rmap", ""),
         baitmap = DESIGN.get("baitmap", ""),
         prev    = "logs/chicago/{sample}.Rout",
@@ -291,7 +291,7 @@ rule chicmaxima:
 # -------------------------------------------------------------------
 rule hic_and_tads:
     input:
-        script = "scripts/03_Generate_hic_and_TADs.R",
+        script = "scripts/03_Generate_hic_and_TADs.r",
         rmap   = DESIGN.get("rmap", ""),
         mat    = OUTDIR + "/{sample}/{sample}.mat",
         bam    = OUTDIR + "/{sample}/mapped.bam",
@@ -336,7 +336,7 @@ rule hic_and_tads:
 
 rule insulation:
     input:
-        script = "scripts/04_InsulationScore.R",
+        script = "scripts/04_InsulationScore.r",
         hic    = OUTDIR + "/{sample}/{sample}.hic",
         prev   = "logs/hic/{sample}.Rout",
     params:
