@@ -55,8 +55,7 @@ jobs:
       # 2) Dry-run DAG using your config
       - name: Dry-run DAG
         run: |
-          snakemake -n --printshellcmds --rerun-incomplete --cores 1 --use-conda --configfile config/config-ci.yaml
-
+          snakemake -n --printshellcmds --rerun-incomplete --cores 1 --use-conda --conda-frontend conda --configfile config/config-ci.yaml
       # 3) Unit tests (if previously generated and committed)
       - name: Run unit tests (pytest) if available
         run: |
