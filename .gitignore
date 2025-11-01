@@ -54,9 +54,9 @@ __pycache__/
 *.snakemake_metadata
 
 # ---- Configuration and secrets ----
-config/*.local.yaml
-config/*.private.yaml
-config/*.backup.yaml
+#config/*.local.yaml
+#config/*.private.yaml
+#config/*.backup.yaml
 
 # ---- Logs and reports ----
 *.log
