@@ -1,0 +1,24 @@
+  mkdir -p envs
+    cat > envs/fanc.yaml <<'YAML'
+  name: fanc
+  channels:
+    - conda-forge
+    - bioconda
+  dependencies:
+    - python=3.10
+    - pip
+    - numpy
+    - scipy
+    - cython
+    - pysam
+    - cooler
+    - click
+    - h5py
+    - matplotlib
+    - pandas
+    - bedtools
+    - samtools
+    - make
+    - pkg-config
+    - pip:
+        - git+https://github.com/vaquerizaslab/fanc.git

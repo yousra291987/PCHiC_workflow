@@ -1,0 +1,10 @@
+name: r-chic
+channels: [bioconda, conda-forge, defaults]
+dependencies:
+  - r-base>=4.2
+  - r-optparse
+  - r-data.table
+  - bedtools
+  - perl
+  - openjdk      # provides `java`
+  - pandoc

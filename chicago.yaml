@@ -1,0 +1,22 @@
+name: chicago
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.3
+  - r-essentials
+  - r-devtools
+  - r-rcpp
+  - r-data.table
+  - r-tidyverse
+  - r-igraph
+  - r-optparse
+  - r-r.utils
+  - r-biocmanager
+  - bedtools
+  - samtools
+  - pkg-config
+  - make
+  - gcc        # may map to clang on mac; compilers needed for source builds
+  - gfortran   # if available; otherwise install Xcode CLT
