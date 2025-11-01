@@ -1,4 +1,6 @@
 # 🧬 Capture-HiC Analysis Pipeline
+[![snakemake-check](https://github.com/yousra291987/PCHiC_workflow/actions/workflows/snakemake-check.yaml/badge.svg)](https://github.com/yousra291987/PCHiC_workflow/actions/workflows/snakemake-check.yaml)
+
 _End-to-end Snakemake pipeline for PCHi-C and Hi-C: QC, significant interaction detection, .hic generation, insulation scores, and TAD calling._
 
 ---
