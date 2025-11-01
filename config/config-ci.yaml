@@ -9,7 +9,9 @@ design:
 
 # Per-sample FASTQs (absolute or relative paths). Add as many samples as you like.
 samples:
-    - CI1
+  CI1:
+    r1: "data/CI1_R1.fastq.gz"
+    r2: "data/CI1_R2.fastq.gz"
 
 hicup:
   bowtie2_bin: "/usr/bin/bowtie2"                 # or env path
