@@ -105,3 +105,6 @@ Output_Test_data/
 # huge design binaries
 design/mm10_HindIII/*.nbpb
 design/mm10_HindIII/*.poe
+
+# allow tiny test FASTQs for CI
+_.fastq.gz
