@@ -41,7 +41,7 @@ TOOLS  = config.get("tools", {"rscript": "Rscript"})  # tool paths with safe def
 TARGETS = []
 for s in SAMPLES:
     TARGETS += [
-        f"{OUTDIR}/{s}/hicup_{s}.config,
+        f"{OUTDIR}/{s}/hicup_{s}.config",
         f"{OUTDIR}/{s}/{s}.hic",
         f"{OUTDIR}/{s}/{s}.insulation",
         f"logs/hicup/{s}.Rout",
