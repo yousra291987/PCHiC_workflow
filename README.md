@@ -1,4 +1,4 @@
-# 🧬 Capture-HiC Analysis Pipeline
+# 🧬 PCHiC-Forge — From reads to robust promoter–enhancer maps
 [![snakemake-check](https://github.com/yousra291987/PCHiC_workflow/actions/workflows/snakemake-check.yaml/badge.svg)](https://github.com/yousra291987/PCHiC_workflow/actions/workflows/snakemake-check.yaml)
 
 _End-to-end Snakemake pipeline for PCHi-C and Hi-C: QC, significant interaction detection, .hic generation, insulation scores, and TAD calling._
@@ -9,9 +9,6 @@ _End-to-end Snakemake pipeline for PCHi-C and Hi-C: QC, significant interaction 
 
 This repository provides a **modular and reproducible Snakemake pipeline** for analyzing **Promoter Capture-HiC (PCHi-C)** and **Hi-C** data.  
 It performs all major processing and analysis steps — from read mapping and QC, through significant interaction detection (Chicago / ChiCMaxima), to 3D genome structure generation and insulation score computation.
-
-The pipeline was developed and maintained by **Yousra Ben Zouari**  
-during her work on chromatin architecture and enhancer regulation.
 
 ---
 
