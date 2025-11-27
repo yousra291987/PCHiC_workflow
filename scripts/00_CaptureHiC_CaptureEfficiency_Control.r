@@ -74,3 +74,30 @@ cat(sprintf(
   opt$sample, format(Total, big.mark=","), format(P0, big.mark=","),
   format(P1, big.mark=","), format(P2, big.mark=","), opt$stats
 ))
+
+# -----------------------------------------------------------------------------
+# Plot: Barplot of P0, P1, P2 + Capture Efficiency title
+# -----------------------------------------------------------------------------
+
+capture_eff <- (P1 + P2) / Total * 100
+capture_eff_str <- sprintf("Capture Efficiency: %.2f%%", capture_eff)
+
+plot_file <- file.path(opt$dir, paste0(opt$sample, "_CaptureEfficiency.pdf"))
+
+pdf(plot_file, width = 6, height = 6)
+
+bar_vals <- c(P0, P1, P2)
+names(bar_vals) <- c("P0", "P1", "P2")
+
+barplot(
+  bar_vals,
+  col = c("#999999", "#56B4E9", "#E69F00"),
+  main = capture_eff_str,
+  ylab = "Counts",
+  xlab = "Categories",
+  las = 1
+)
+
+dev.off()
+
+cat(sprintf("Plot saved: %s\n", plot_file))
