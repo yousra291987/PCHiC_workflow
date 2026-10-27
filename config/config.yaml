@@ -8,10 +8,19 @@ design:
   probeinfo: "design/MM10_HindIII/MM10_HindIII_ProbeInfo.txt"
 
 # Per-sample FASTQs (absolute or relative paths). Add as many samples as you like.
+# Each sample may provide EITHER a single pair (r1/r2) OR several pairs via
+# `fastqs:` to merge technical replicates (HiCUP combines them into one BAM).
 samples:
-  CI1:
+  CI1:                                  # single pair (legacy form) — still works
     r1: "data/CI1_R1.fastq.gz"
     r2: "data/CI1_R2.fastq.gz"
+  # Example: a sample with multiple technical replicates (merged by HiCUP).
+  # CI2:
+  #   fastqs:
+  #     - r1: "data/CI2_rep1_R1.fastq.gz"
+  #       r2: "data/CI2_rep1_R2.fastq.gz"
+  #     - r1: "data/CI2_rep2_R1.fastq.gz"
+  #       r2: "data/CI2_rep2_R2.fastq.gz"
 
 # HiCUP + mapping settings
 hicup:
