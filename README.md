@@ -159,6 +159,49 @@ hicup:
   digest: "design/mm10_HindIII/mm10_HindIII_digest.txt"
 ```
 
+### 🔁 Technical replicates (multiple FASTQ pairs per sample)
+
+A **technical replicate** is the *same* library sequenced more than once (e.g. across lanes or
+sequencing runs). HiCUP can take several paired FASTQ files for one sample and **merge them into a
+single BAM**, so everything downstream (QC, Chicago, `.hic`, insulation) treats the sample as one.
+
+A sample may be declared in any of the following ways:
+
+**1. Single pair (legacy form) — still works:**
+```yaml
+samples:
+  MySample01:
+    r1: "data/MySample01_R1.fastq.gz"
+    r2: "data/MySample01_R2.fastq.gz"
+```
+
+**2. Several technical replicates — preferred form (`fastqs:`):**
+```yaml
+samples:
+  MySample02:
+    fastqs:
+      - r1: "data/MySample02_lane1_R1.fastq.gz"
+        r2: "data/MySample02_lane1_R2.fastq.gz"
+      - r1: "data/MySample02_lane2_R1.fastq.gz"
+        r2: "data/MySample02_lane2_R2.fastq.gz"
+      # add one r1/r2 entry per sequencing run — HiCUP merges them into one BAM
+```
+
+**3. Equal-length `r1` / `r2` lists — matched element-wise:**
+```yaml
+samples:
+  MySample03:
+    r1: ["data/MySample03_L1_R1.fastq.gz", "data/MySample03_L2_R1.fastq.gz"]
+    r2: ["data/MySample03_L1_R2.fastq.gz", "data/MySample03_L2_R2.fastq.gz"]
+```
+
+You can mix forms across samples. A few rules the pipeline enforces:
+
+- Every pair needs **both** `r1` and `r2`.
+- In form 3, the `r1` and `r2` lists must have the **same length** — each R1 needs a matching R2.
+- R1 and R2 are matched **by position**, so keep the entries in the same order.
+- Paths may be relative or absolute (they are resolved to absolute paths internally).
+
 ## 🚀 Running the Pipeline
 
 1. **Dry-run (check commands)**
