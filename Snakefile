@@ -27,6 +27,47 @@ def _sample_meta(sample_id):
         return _s.get(sample_id, {})
     return {}
 
+# Resolve all FASTQ pairs for a sample (supports technical replicates).
+# HiCUP accepts many paired FASTQs: list each R1/R2 pair on adjacent lines
+# and HiCUP merges them into one BAM. Accepted per-sample layouts in
+# config['samples'][<id>]:
+#   - fastqs: [{r1: ..., r2: ...}, {r1: ..., r2: ...}]   # preferred for tech reps
+#   - r1 / r2 as scalars                                  # single pair (legacy)
+#   - r1 / r2 as equal-length lists                       # paired element-wise
+def _sample_fastq_pairs(sample_id):
+    meta = _sample_meta(sample_id)
+    pairs = []
+    fq = meta.get("fastqs")
+    if fq:
+        for i, p in enumerate(fq):
+            if "r1" not in p or "r2" not in p:
+                raise ValueError(
+                    f"[{sample_id}] fastqs[{i}] must have both 'r1' and 'r2'."
+                )
+            pairs.append((p["r1"], p["r2"]))
+    else:
+        r1 = meta.get("r1")
+        r2 = meta.get("r2")
+        if isinstance(r1, (list, tuple)) or isinstance(r2, (list, tuple)):
+            r1 = list(r1) if isinstance(r1, (list, tuple)) else [r1]
+            r2 = list(r2) if isinstance(r2, (list, tuple)) else [r2]
+            if len(r1) != len(r2):
+                raise ValueError(
+                    f"[{sample_id}] r1 and r2 lists differ in length "
+                    f"({len(r1)} vs {len(r2)}); each R1 needs a matching R2."
+                )
+            pairs = list(zip(r1, r2))
+        elif r1 and r2:
+            pairs = [(r1, r2)]
+    return [(os.path.abspath(a), os.path.abspath(b)) for a, b in pairs]
+
+# Interleaved R1/R2 lines (one path per line) for the HiCUP config body.
+def _fastq_block(sample_id):
+    lines = []
+    for r1, r2 in _sample_fastq_pairs(sample_id):
+        lines += [r1, r2]
+    return "\n".join(lines)
+
 SAMPLES = _resolve_samples(config)
 OUTDIR  = config.get("outdir", "results")
 THREADS = config.get("threads", {}).get("default", 4)
@@ -75,9 +116,9 @@ rule hicup_config:
         fmt      = lambda w: config.get('hicup', {}).get('format', ''),    # "", "Sanger", etc.
         longest  = lambda w: config.get('hicup', {}).get('longest', 2000),
         shortest = lambda w: config.get('hicup', {}).get('shortest', 100),
-        # Per-sample FASTQs from your helper (fallbacks are CI-friendly)
-        r1       = lambda w: os.path.abspath(_sample_meta(w.sample).get('r1', 'R1.fastq.gz')),
-        r2       = lambda w: os.path.abspath(_sample_meta(w.sample).get('r2', 'R2.fastq.gz')),
+        # Per-sample FASTQ pairs (supports multiple technical replicates),
+        # rendered as interleaved R1/R2 lines for the HiCUP config body.
+        fastqs   = lambda w: _fastq_block(w.sample),
     threads: 1
     message:
         "Writing HiCUP config for {wildcards.sample} -> {output.cfg}"
@@ -86,9 +127,9 @@ rule hicup_config:
         set -euo pipefail
         mkdir -p {params.outdir}/{wildcards.sample}
 
-        # Quick guardrails: ensure r1/r2 look non-empty
-        if [ -z "{params.r1}" ] || [ -z "{params.r2}" ]; then
-          echo "[hicup_config] r1/r2 missing for {wildcards.sample}. Check config['samples']." >&2
+        # Quick guardrails: ensure at least one FASTQ pair was resolved
+        if [ -z "{params.fastqs}" ]; then
+          echo "[hicup_config] No FASTQ pairs for {wildcards.sample}. Check config['samples'] (r1/r2 or fastqs:)." >&2
           exit 2
         fi
 
@@ -105,8 +146,7 @@ Digest:{params.digest}
 Format:{params.fmt}
 Longest:{params.longest}
 Shortest:{params.shortest}
-{params.r1}
-{params.r2}
+{params.fastqs}
 CFG
 """
 
