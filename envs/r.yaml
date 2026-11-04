@@ -5,6 +5,7 @@ dependencies:
   - r-optparse
   - r-data.table
   - bedtools
+  - samtools     # required so HiCUP writes BAM (not SAM) and for merging replicates
   - perl
   - openjdk      # provides `java`
   - pandoc

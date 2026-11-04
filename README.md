@@ -162,8 +162,16 @@ hicup:
 ### 🔁 Technical replicates (multiple FASTQ pairs per sample)
 
 A **technical replicate** is the *same* library sequenced more than once (e.g. across lanes or
-sequencing runs). HiCUP can take several paired FASTQ files for one sample and **merge them into a
-single BAM**, so everything downstream (QC, Chicago, `.hic`, insulation) treats the sample as one.
+sequencing runs). You list all FASTQ pairs for the sample in the config, and the pipeline produces a
+single `mapped.bam` so everything downstream (QC, Chicago, `.hic`, insulation) treats the sample as one.
+
+> **How the merge actually happens.** HiCUP itself does **not** combine pairs: per the
+> [HiCUP docs](https://www.bioinformatics.babraham.ac.uk/projects/hicup/read_the_docs/html/index.html),
+> "a file pair generates one output file", so *N* pairs give *N* `*.hicup.bam` files. The `hicup_qc`
+> step then **merges those per-replicate BAMs** into one `mapped.bam` with `samtools merge`.
+> Note: HiCUP de-duplicates each pair separately, so duplicates spanning different pairs are not
+> removed (normally negligible for technical replicates of one library). If you need de-duplication
+> across everything, concatenate the FASTQs into a single pair instead and run HiCUP once on that.
 
 A sample may be declared in any of the following ways:
 
@@ -184,7 +192,7 @@ samples:
         r2: "data/MySample02_lane1_R2.fastq.gz"
       - r1: "data/MySample02_lane2_R1.fastq.gz"
         r2: "data/MySample02_lane2_R2.fastq.gz"
-      # add one r1/r2 entry per sequencing run — HiCUP merges them into one BAM
+      # add one r1/r2 entry per sequencing run — the pipeline merges them into one mapped.bam
 ```
 
 **3. Equal-length `r1` / `r2` lists — matched element-wise:**
