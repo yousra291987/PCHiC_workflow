@@ -209,6 +209,9 @@ You can mix forms across samples. A few rules the pipeline enforces:
 - In form 3, the `r1` and `r2` lists must have the **same length** — each R1 needs a matching R2.
 - R1 and R2 are matched **by position**, so keep the entries in the same order.
 - Paths may be relative or absolute (they are resolved to absolute paths internally).
+- **File names are arbitrary.** Use whatever paths your FASTQs actually have
+  (`testis_R1.fastq.gz`, `miti.chicken.testis.R1.fastq.gz`, …); there is no
+  required naming convention — the values you write here are passed to HiCUP verbatim.
 
 ## 🚀 Running the Pipeline
 

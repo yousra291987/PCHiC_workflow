@@ -53,9 +53,13 @@ jobs:
         continue-on-error: true
 
       # 2) Dry-run DAG using your config
+      #    A dry-run only builds the DAG and prints shell commands, so it does
+      #    not need conda environments. We intentionally omit --use-conda here:
+      #    the CI runner provides micromamba (not `conda`), so
+      #    `--conda-frontend conda` would fail with "conda: command not found".
       - name: Dry-run DAG
         run: |
-          snakemake -n --printshellcmds --rerun-incomplete --cores 1 --use-conda --conda-frontend conda --configfile config/config-ci.yaml  --until chicago
+          snakemake -n --printshellcmds --rerun-incomplete --cores 1 --configfile config/config-ci.yaml --until chicago
       # 3) Unit tests (if previously generated and committed)
       - name: Run unit tests (pytest) if available
         run: |
