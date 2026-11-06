@@ -169,6 +169,7 @@ rule hicup_qc:
         outdir     = OUTDIR,
         hicup_bin  = TOOLS.get("hicup", "hicup"),
         bedtools   = TOOLS.get("bedtools", "bedtools"),
+        samtools   = TOOLS.get("samtools", "samtools"),
         perl       = TOOLS.get("perl", "perl"),
         bam2frags  = TOOLS.get("bam_to_fragments", "scripts/BamToFragments.pl"),
         rscript    = TOOLS.get("rscript", "Rscript"),
@@ -191,6 +192,7 @@ rule hicup_qc:
           --hicup_config "{input.hicup_cfg}" \
           --hicup_bin "{params.hicup_bin}" \
           --bedtools_bin "{params.bedtools}" \
+          --samtools_bin "{params.samtools}" \
           --perl_bin "{params.perl}" \
           --bam_to_fragments "{params.bam2frags}" \
           --mapped_bam "{output.bam}" \
