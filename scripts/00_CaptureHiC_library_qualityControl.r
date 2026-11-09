@@ -95,15 +95,22 @@ bam_files <- unique(vapply(hicup_out, to_bam, character(1)))
 #    One replicate -> symlink/copy it; several -> merge them with samtools.
 #    Note: HiCUP de-duplicates each pair separately, so a merge of technical
 #    replicates does not remove duplicates that span pairs (usually negligible).
-if (file.exists(opt$mapped_bam)) file.remove(opt$mapped_bam)
+# Remove any existing mapped.bam, including a dangling symlink from a previous
+# run (file.exists() is FALSE for a broken link, so use unlink()).
+unlink(opt$mapped_bam, force = TRUE)
 if (length(bam_files) == 1) {
-  message("   Single HiCUP BAM -> mapped.bam: ", bam_files[1])
-  success <- FALSE
-  try({
-    file.symlink(from = bam_files[1], to = opt$mapped_bam)
-    success <- TRUE
-  }, silent = TRUE)
-  if (!success) file.copy(from = bam_files[1], to = opt$mapped_bam, overwrite = TRUE)
+  # Use an ABSOLUTE target: a symlink resolves a relative target against its
+  # own directory, not the CWD, which would otherwise dangle (e.g.
+  # results/testis/results/testis/...). Fall back to copy if the link is not
+  # usable (e.g. filesystem without symlink support).
+  src <- normalizePath(bam_files[1], mustWork = TRUE)
+  message("   Single HiCUP BAM -> mapped.bam: ", src)
+  ok <- FALSE
+  try({ ok <- file.symlink(from = src, to = opt$mapped_bam) }, silent = TRUE)
+  if (!isTRUE(ok) || !file.exists(opt$mapped_bam)) {
+    unlink(opt$mapped_bam, force = TRUE)
+    file.copy(from = src, to = opt$mapped_bam, overwrite = TRUE)
+  }
 } else {
   message("   Merging ", length(bam_files), " replicate BAMs -> mapped.bam")
   merge_cmd <- sprintf('%s merge -f "%s" %s',
