@@ -34,7 +34,13 @@ tools:
   bam2juicer: "scripts/Bam2Juicer.pl"
   align2ibed: "scripts/align2ibed.pl"
   java: "java"
-  juicer_tools: "juicer_tools.jar"
+  juicer_tools: "juicer_tools.jar"      # placeholder; set to the real jar path to run the .hic step
+  chicago_bam2chicago: ""               # e.g. "/path/to/chicagoTools/bam2chicago.sh"
+  chicago_make_design: ""               # e.g. "/path/to/chicagoTools/makeDesignFiles_py3.py"
+  python: "python"
+
+chicago:
+  force_make_design: false
 
 params:
   juicer_mem_gb: 10

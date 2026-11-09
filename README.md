@@ -213,6 +213,46 @@ You can mix forms across samples. A few rules the pipeline enforces:
   (`testis_R1.fastq.gz`, `miti.chicken.testis.R1.fastq.gz`, …); there is no
   required naming convention — the values you write here are passed to HiCUP verbatim.
 
+## 🔧 Downstream tool setup (CHiCAGO & juicer_tools)
+
+QC and capture-efficiency run with the bundled conda environments, but two
+downstream steps need external tools that are **not** shipped with this repo.
+Configure them in `config/config.yaml` before running those steps.
+
+**CHiCAGO interaction calling.** The `Chicago` R package is now installed from
+the conda env (`envs/chicago.yaml`), but CHiCAGO also needs the **chicagoTools**
+helper scripts (`bam2chicago.sh`, `makeDesignFiles_py3.py`), which are
+distributed separately from the R package. Point the config at them:
+
+```yaml
+tools:
+  chicago_bam2chicago: "/path/to/chicagoTools/bam2chicago.sh"
+  chicago_make_design: "/path/to/chicagoTools/makeDesignFiles_py3.py"
+  python: "python"
+
+chicago:
+  # true on the FIRST run (or whenever rmap/baitmap change) to build the
+  # CHiCAGO design files (.npb/.nbpb/.poe) into design.dir. Needs chicago_make_design.
+  force_make_design: true
+```
+
+If `chicago_bam2chicago` is left empty, the CHiCAGO step stops early with a clear
+message instead of running on missing inputs. The design directory must contain
+the CHiCAGO design files (`.npb`, `.nbpb`, `.poe`); set `force_make_design: true`
+once to generate them, then you can set it back to `false`.
+
+**`.hic` generation (juicer_tools).** Download `juicer_tools` and set an
+**absolute** path (the default `"juicer_tools.jar"` is only a placeholder):
+
+```yaml
+tools:
+  juicer_tools: "/path/to/juicer_tools.1.22.01.jar"
+```
+
+ChiCMaxima and capture-efficiency do **not** need either of these, and (as of the
+latest version) ChiCMaxima no longer waits on CHiCAGO, so it runs even if CHiCAGO
+is not configured.
+
 ## 🚀 Running the Pipeline
 
 1. **Dry-run (check commands)**

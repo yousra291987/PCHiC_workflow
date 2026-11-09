@@ -299,7 +299,9 @@ rule chicmaxima:
         script  = "scripts/02_ChiCMaxima.r",
         rmap    = DESIGN.get("rmap", ""),
         baitmap = DESIGN.get("baitmap", ""),
-        prev    = "logs/chicago/{sample}.Rout",
+        # ChiCMaxima only needs the HiCUP BEDPE, not CHiCAGO's output. Depend on
+        # that file directly so a CHiCAGO failure does not block this step.
+        bed     = OUTDIR + "/{sample}/{sample}.hicup.bed",
     params:
         outdir     = OUTDIR,
         rscript    = TOOLS.get("rscript","Rscript"),
