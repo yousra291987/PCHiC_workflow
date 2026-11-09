@@ -44,7 +44,24 @@ tools:
   bam2juicer: "scripts/Bam2Juicer.pl"
   align2ibed: "scripts/align2ibed.pl"
   java: "java"
+  # REQUIRED for the .hic step: absolute path to the juicer_tools jar.
+  # The value below is only a placeholder — download juicer_tools and point to it,
+  # e.g. "/path/to/juicer_tools.1.22.01.jar".
   juicer_tools: "juicer_tools.jar"
+  # REQUIRED for the CHiCAGO step: paths to the chicagoTools scripts
+  # (distributed separately from the Chicago R package; see the README).
+  # Leave empty to skip CHiCAGO — the chicago rule will then stop with a clear
+  # message rather than run on missing inputs.
+  chicago_bam2chicago: ""                  # e.g. "/path/to/chicagoTools/bam2chicago.sh"
+  chicago_make_design: ""                  # e.g. "/path/to/chicagoTools/makeDesignFiles_py3.py"
+  python: "python"                         # used by makeDesignFiles_py3.py
+
+# CHiCAGO options
+chicago:
+  # Set true the first time (or when design/rmap/baitmap change) to build the
+  # CHiCAGO design files (.npb/.nbpb/.poe) into `design.dir` with makeDesignFiles.
+  # Requires tools.chicago_make_design to be set.
+  force_make_design: false
 
 params:
   juicer_mem_gb: 10

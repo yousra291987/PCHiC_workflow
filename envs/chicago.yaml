@@ -14,6 +14,7 @@ dependencies:
   - r-optparse
   - r-r.utils
   - r-biocmanager
+  - bioconductor-chicago   # provides the Chicago R package (avoids a slow, network-dependent runtime install)
   - bedtools
   - samtools
   - pkg-config
