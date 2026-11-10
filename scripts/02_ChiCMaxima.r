@@ -46,8 +46,12 @@ message("  baitmap:    ", opt$baitmap)
 message("  rmap:       ", opt$rmap)
 message("  out IBED:   ", opt$ibed_out)
 
-# Run align2ibed.pl
-cmd <- sprintf('"%s" "%s" "%s" "%s" "%s" 1 2 4 5',
+# Run align2ibed.pl:
+#   align2ibed.pl <bedpe> <baitmap> <rmap> <output> <r1 chr> <r1 coord> <r2 chr> <r2 coord>
+# NOTE: SIX "%s" are required (perl, script, bedpe, baitmap, rmap, output); an
+# earlier version had only five, which silently dropped the output path and made
+# align2ibed.pl receive "1" as its output argument.
+cmd <- sprintf('"%s" "%s" "%s" "%s" "%s" "%s" 1 2 4 5',
                opt$perl_bin, opt$align2ibed, bed_file, opt$baitmap, opt$rmap, opt$ibed_out)
 message("[align2ibed] ", cmd)
 status <- system(cmd)
