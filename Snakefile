@@ -6,6 +6,7 @@
 # -------------------------------------------------------------------
 
 import os
+import sys
 from pathlib import Path
 
 # Default for users; CI overrides with: --configfile config/config-ci.yaml
@@ -85,8 +86,24 @@ TOOLS  = config.get("tools", {"rscript": "Rscript"})  # tool paths with safe def
 # to install CHiCAGO, or no juicer_tools). Note: insulation needs the .hic, so
 # it is only built when hic_and_tads is also on.
 STEPS = config.get("steps", {}) or {}
+# Treat a step as OFF for falsey YAML booleans AND for the common string spellings
+# people use ("false", "no", "off", "0"). This matters because `steps:\n  hic_and_tads: "false"`
+# (quoted) parses as the *string* "false", which is truthy in Python — so without
+# this the step would silently stay ON despite the config saying otherwise.
+_FALSEY = {"false", "no", "off", "0", "none", ""}
 def _step_on(name):
-    return bool(STEPS.get(name, True))
+    v = STEPS.get(name, True)
+    if isinstance(v, str):
+        return v.strip().lower() not in _FALSEY
+    return bool(v)
+
+# Print the resolved step states so a mis-indented or mistyped toggle is obvious
+# in the Snakemake log instead of failing confusingly later.
+_ALL_STEPS = ("capture_efficiency", "chicago", "chicmaxima", "hic_and_tads", "insulation")
+print(
+    "[steps] " + ", ".join(f"{n}={'on' if _step_on(n) else 'OFF'}" for n in _ALL_STEPS),
+    file=sys.stderr,
+)
 
 TARGETS = []
 for s in SAMPLES:

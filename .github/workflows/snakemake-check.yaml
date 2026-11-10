@@ -36,6 +36,10 @@ jobs:
             snakefmt=0.8.*
             pytest
             graphviz
+            perl
+            r-base
+            r-optparse
+            r-data.table
           cache-environment: true
 
       - name: Snakemake version
@@ -60,6 +64,16 @@ jobs:
       - name: Dry-run DAG
         run: |
           snakemake -n --printshellcmds --rerun-incomplete --cores 1 --configfile config/config-ci.yaml --until chicago
+
+      # 2b) Downstream smoke test — a dry-run never RUNS the scripts, so this
+      #     executes the real R/Perl chain (BamToFragments.pl -> .mat ->
+      #     03_Generate_hic_and_TADs.r -> Bam2Juicer.pl -> PRE, plus
+      #     align2ibed.pl) on tiny fixtures and asserts the output shapes. It
+      #     catches runtime/format bugs (wrong columns, arg counts, CRLF design
+      #     files) that the dry-run cannot. This step is REQUIRED (it gates).
+      - name: Downstream smoke test (executes the scripts on toy fixtures)
+        run: bash tests/smoke_downstream.sh
+
       # 3) Unit tests (if previously generated and committed)
       - name: Run unit tests (pytest) if available
         run: |

@@ -34,6 +34,7 @@ my %coord2index;
 open IN,$rmap or die $!;
 while (my $line = <IN>) {
 	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
 	my $chr = $f[0];
 	$chr = "chr".$f[0] unless ($f[0] =~ /chr/);
@@ -56,6 +57,7 @@ while (my $line = <IN>) {
 	++$reads;
 	print $reads,"...\n" if ($reads % 1000000 == 0);
 	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
 	next unless ($f[$leftchrcol] eq $f[$rightchrcol]);
 	my $leftfrag = coordtofrag($f[$leftchrcol],$f[$leftcoordcol]);

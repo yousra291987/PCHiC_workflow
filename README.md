@@ -270,8 +270,31 @@ steps:
 ```
 
 A step set to `false` is simply not requested, so Snakemake never enters its
-rule. To skip a step for a single run without editing the config, you can also
-pass `--omit-from <rule>`, e.g. `snakemake -c 4 --use-conda --omit-from chicago`.
+rule. When the workflow starts it prints the resolved state of every step, e.g.
+
+```
+[steps] capture_efficiency=on, chicago=OFF, chicmaxima=on, hic_and_tads=OFF, insulation=on
+```
+
+Check that line to confirm your toggle took effect. Two common reasons a
+`false` is ignored: the key is not indented **under** `steps:`, or it is
+**quoted** (`hic_and_tads: "false"` is the string `"false"`, which is truthy —
+write it unquoted: `hic_and_tads: false`).
+
+To skip a step for a single run **without editing the config** (this always
+works, regardless of the toggles), use `--omit-from <rule>` or `--until <rule>`.
+You can repeat `--omit-from`:
+
+```bash
+# Run QC + capture efficiency + ChiCMaxima only; skip CHiCAGO and .hic/TADs:
+snakemake -c 4 --use-conda --omit-from chicago --omit-from hic_and_tads
+```
+
+> **Non-standard genomes & `.hic`:** `juicer_tools pre` needs its last argument to
+> be a known genome ID (`hg19`, `mm10`, …) **or a chromosome-sizes file**. For a
+> custom assembly (e.g. `ggal7`), set `params.juicer_genome_id` to the path of a
+> `chrom.sizes` file for that genome, otherwise the `hic_and_tads` step will size
+> chromosomes incorrectly or fail.
 
 ## 🚀 Running the Pipeline
 

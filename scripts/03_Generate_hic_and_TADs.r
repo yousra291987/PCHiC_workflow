@@ -41,18 +41,39 @@ message("  PRE:  ", opt$pre)
 message("  HIC:  ", opt$hic)
 
 # -------------------------------------------------------------------
-# 1) Prepare a triplet MAT (col1, col3, col5) without header (R replaces awk/sed)
-#    The original pipeline dropped the first row and kept cols 1/3/5.
+# 1) Prepare the (fragment1_id, fragment2_id, count) triplet juicer needs.
+#    The .mat written by BamToFragments.pl has a header row and the columns:
+#      Fragment1  ProbeF1  Fragment2  ProbeF2  N
+#    The triplet juicer's pre step consumes is (Fragment1, Fragment2, N) =
+#    columns 1, 3, 5. We select by column name when the header is present, and
+#    otherwise fall back to positions 1/3/5.
 # -------------------------------------------------------------------
 if (!file.exists(opt$mat)) stop("MAT not found: ", opt$mat)
 DT <- fread(opt$mat, header = FALSE, sep = "\t", showProgress = FALSE)
 
-if (ncol(DT) < 5) stop("MAT must have at least 5 columns.")
+if (ncol(DT) < 5) stop("MAT has only ", ncol(DT), " column(s); expected the 5-column BamToFragments.pl table (Fragment1 ProbeF1 Fragment2 ProbeF2 N).")
 
-# Drop first row (original sed '1d')
-if (nrow(DT) > 0) DT <- DT[-1]
+hdr <- as.character(unlist(DT[1]))
+if (all(c("Fragment1", "Fragment2", "N") %in% hdr)) {
+  # Header present: name the columns and select by name (robust to reordering).
+  data.table::setnames(DT, hdr)
+  DT <- DT[-1]
+  trip <- DT[, .(Fragment1, Fragment2, N)]
+} else {
+  # No recognizable header: use the known positions (Fragment1, Fragment2, N).
+  if (nrow(DT) > 0) DT <- DT[-1]   # drop the header row (original sed '1d')
+  trip <- DT[, .(V1, V3, V5)]
+}
 
-trip <- DT[, .(V1, V3, V5)]
+# Guard against a silent column mix-up: the two id columns and the count must
+# be integer-like. Catches a malformed .mat early with a clear message instead
+# of letting Bam2Juicer.pl emit garbage that only fails later.
+chk1 <- suppressWarnings(as.integer(as.character(trip[[1]])))
+chk2 <- suppressWarnings(as.integer(as.character(trip[[2]])))
+chk3 <- suppressWarnings(as.integer(as.character(trip[[3]])))
+if (any(is.na(chk1)) || any(is.na(chk2)) || any(is.na(chk3))) {
+  stop("MAT columns are not all integer-like after selecting (Fragment1, Fragment2, N); the .mat may be malformed: ", opt$mat)
+}
 trip_file <- file.path(opt$dir, paste0(opt$sample, "_mat_triplet.tmp"))
 fwrite(trip, trip_file, sep = "\t", col.names = FALSE)
 
