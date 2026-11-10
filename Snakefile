@@ -79,17 +79,31 @@ TOOLS  = config.get("tools", {"rscript": "Rscript"})  # tool paths with safe def
 # -------------------------------------------------------------------
 # Default targets (precomputed; no wildcards to infer)
 # -------------------------------------------------------------------
+# Optional steps can be switched off in config under `steps:` (each defaults to
+# true). A step turned off is simply not requested as a target, so Snakemake
+# never enters its rule — useful when a tool is unavailable (e.g. no permission
+# to install CHiCAGO, or no juicer_tools). Note: insulation needs the .hic, so
+# it is only built when hic_and_tads is also on.
+STEPS = config.get("steps", {}) or {}
+def _step_on(name):
+    return bool(STEPS.get(name, True))
+
 TARGETS = []
 for s in SAMPLES:
     TARGETS += [
         f"{OUTDIR}/{s}/hicup_{s}.config",
-        f"{OUTDIR}/{s}/{s}.hic",
-        f"{OUTDIR}/{s}/{s}.insulation",
         f"logs/hicup/{s}.Rout",
-        f"logs/capture_eff/{s}.Rout",
-        f"logs/chicago/{s}.Rout",
-        f"logs/chicmaxima/{s}.Rout",
     ]
+    if _step_on("capture_efficiency"):
+        TARGETS.append(f"logs/capture_eff/{s}.Rout")
+    if _step_on("chicago"):
+        TARGETS.append(f"logs/chicago/{s}.Rout")
+    if _step_on("chicmaxima"):
+        TARGETS.append(f"logs/chicmaxima/{s}.Rout")
+    if _step_on("hic_and_tads"):
+        TARGETS.append(f"{OUTDIR}/{s}/{s}.hic")
+        if _step_on("insulation"):
+            TARGETS.append(f"{OUTDIR}/{s}/{s}.insulation")
 
 rule all:
     input: TARGETS

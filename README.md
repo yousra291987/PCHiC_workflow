@@ -253,6 +253,26 @@ ChiCMaxima and capture-efficiency do **not** need either of these, and (as of th
 latest version) ChiCMaxima no longer waits on CHiCAGO, so it runs even if CHiCAGO
 is not configured.
 
+### ⏯️ Turning steps on/off
+
+If a tool isn't available to you (e.g. you can't install CHiCAGO, or you don't
+have `juicer_tools`), switch the corresponding step **off** in `config.yaml`
+instead of leaving tool paths empty — an empty path does not skip the step, it
+just makes it fail. Each step defaults to `true`:
+
+```yaml
+steps:
+  capture_efficiency: true
+  chicago: false          # skip CHiCAGO entirely (its rule is never requested)
+  chicmaxima: true
+  hic_and_tads: true      # set false if you don't have juicer_tools
+  insulation: true        # only runs when hic_and_tads is also true
+```
+
+A step set to `false` is simply not requested, so Snakemake never enters its
+rule. To skip a step for a single run without editing the config, you can also
+pass `--omit-from <rule>`, e.g. `snakemake -c 4 --use-conda --omit-from chicago`.
+
 ## 🚀 Running the Pipeline
 
 1. **Dry-run (check commands)**

@@ -42,6 +42,14 @@ tools:
 chicago:
   force_make_design: false
 
+# Turn individual steps on/off (each defaults to true). Set e.g. chicago: false to skip it.
+steps:
+  capture_efficiency: true
+  chicago: true
+  chicmaxima: true
+  hic_and_tads: true
+  insulation: true
+
 params:
   juicer_mem_gb: 10
   juicer_q: 10

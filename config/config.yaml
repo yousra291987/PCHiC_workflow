@@ -63,6 +63,18 @@ chicago:
   # Requires tools.chicago_make_design to be set.
   force_make_design: false
 
+# Turn individual steps on/off. Each defaults to true if omitted. Set a step to
+# false to skip it entirely (it won't be requested, so its rule never runs) —
+# e.g. set `chicago: false` if you can't install/run CHiCAGO, or `hic_and_tads`
+# / `insulation: false` if you don't have juicer_tools / FAN-C.
+# (insulation needs the .hic, so it only runs when hic_and_tads is also true.)
+steps:
+  capture_efficiency: true
+  chicago: true
+  chicmaxima: true
+  hic_and_tads: true
+  insulation: true
+
 params:
   juicer_mem_gb: 10
   juicer_q: 10
