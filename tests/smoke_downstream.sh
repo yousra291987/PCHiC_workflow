@@ -30,14 +30,15 @@ pass() { printf '  OK   %s\n' "$1"; }
 fail() { printf '  FAIL %s\n' "$1"; [ "${2:-}" ] && { echo "----"; cat "$2"; echo "----"; }; exit 1; }
 
 echo "== 1) BamToFragments.pl -> .mat =="
+# BamToFragments.pl writes the 5-column table: Fragment1 ProbeF1 Fragment2 ProbeF2 N
 mat="$work/toy.mat"
 perl "$root/scripts/BamToFragments.pl" \
-  "$fx/toy.bedpe" "$fx/toy.baitmap" "$fx/toy.rmap" "$mat" 1 2 4 5 >/dev/null
+  "$fx/toy.bedpe" "$fx/toy.baitmap" "$fx/toy.rmap" "$mat" 1 2 4 5 2>/dev/null
 cols=$(head -1 "$mat" | awk -F'\t' '{print NF}')
-[ "$cols" -eq 11 ] || fail ".mat header has $cols columns, expected 11" "$mat"
+[ "$cols" -eq 5 ] || fail ".mat header has $cols columns, expected 5" "$mat"
 [ "$(wc -l < "$mat")" -ge 2 ] || fail ".mat produced no interaction rows" "$mat"
-head -1 "$mat" | grep -q 'ID_Bait' || fail ".mat missing expected ID_Bait header" "$mat"
-pass ".mat is the 11-column BamToFragments table with interactions"
+head -1 "$mat" | grep -q 'Fragment1' || fail ".mat missing expected Fragment1 header" "$mat"
+pass ".mat is the 5-column BamToFragments table with interactions"
 
 echo "== 2) 03_Generate_hic_and_TADs.r (real script, fake java) -> PRE + .hic =="
 pre="$work/toy_pre.txt"
