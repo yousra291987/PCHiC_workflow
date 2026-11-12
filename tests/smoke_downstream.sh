@@ -78,5 +78,20 @@ perl "$root/scripts/align2ibed.pl" \
 [ -s "$ibed" ] || fail ".ibed not created or empty"
 pass ".ibed was produced"
 
+echo "== 5) BamToFragments.pl tolerates chr-naming differences (bed '1' vs rmap 'chr1') =="
+# Regression: a real run on a non-'chr' assembly (e.g. chicken ggal7) had the
+# rmap keyed as 'chr1' while the BEDPE used '1', so every coordtofrag() lookup
+# missed -> an empty .mat and millions of "uninitialized value" warnings
+# (a multi-GB log). Chromosome names must match after stripping a 'chr' prefix.
+nochr_bedpe="$work/toy_nochr.bedpe"
+sed -E 's/^chr//; s/\tchr/\t/g' "$fx/toy.bedpe" > "$nochr_bedpe"
+mm_mat="$work/toy_mm.mat"
+warn="$work/bamtofrag.warn"
+perl "$root/scripts/BamToFragments.pl" \
+  "$nochr_bedpe" "$fx/toy.baitmap" "$fx/toy.rmap" "$mm_mat" 1 2 4 5 2>"$warn" >/dev/null
+[ "$(wc -l < "$mm_mat")" -ge 2 ] || fail "chr-mismatch: .mat has no interactions (lookup failed)" "$mm_mat"
+if grep -q "uninitialized" "$warn"; then fail "chr-mismatch: coordtofrag still floods warnings" "$warn"; fi
+pass "chr-naming difference handled, with no per-read warnings"
+
 echo
 echo "ALL DOWNSTREAM SMOKE CHECKS PASSED"

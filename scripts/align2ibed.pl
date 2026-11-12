@@ -36,10 +36,10 @@ while (my $line = <IN>) {
 	chomp $line;
 	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
-	my $chr = $f[0];
-	$chr = "chr".$f[0] unless ($f[0] =~ /chr/);
+	my $chr = $f[0];                 # keep the rmap chromosome name exactly as given
+	(my $key = $chr) =~ s/^chr//i;   # normalized key so "chr1" (bed) and "1" (rmap) match
 	$frags{$f[3]} = {chrom=>$chr, start=>$f[1], end=>$f[2]};
-	$coord2index{$chr}->{$f[3]} = {start=>$f[1], end=>$f[2]};
+	$coord2index{$key}->{$f[3]} = {start=>$f[1], end=>$f[2]};
 }
 close IN or die $!;
 foreach my $chrom(keys %coord2index) {
@@ -136,8 +136,12 @@ sub binary_search {
 
 sub coordtofrag {
 	my ($chr,$coord) = (@_);
-	my $index_p = binary_search($coord2index{$chr}->{sorted},$coord);
-	return (-1) if ($index_p == -1);
-	my $frag = $coord2index{$chr}->{sorted}[$index_p];
-	return($frag);
+	(my $key = $chr) =~ s/^chr//i;   # match the normalized rmap keys
+	my $sorted = $coord2index{$key}->{sorted};
+	# Chromosome not in the rmap: skip quietly rather than warning per read.
+	return (-1) unless (defined $sorted && @$sorted);
+	my $index_p = binary_search($sorted,$coord);
+	return (-1) unless (defined $index_p && $index_p != -1);
+	my $frag = $sorted->[$index_p];
+	return (defined $frag ? $frag : -1);
 }
