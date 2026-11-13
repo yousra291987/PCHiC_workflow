@@ -53,6 +53,8 @@ steps:
 params:
   juicer_mem_gb: 10
   juicer_q: 10
+  # A known juicer genome ID (hg19, mm10, ...) OR a path to a chrom.sizes file
+  # (use the chrom.sizes path for a non-standard assembly, e.g. ggal7).
   juicer_genome_id: "mm10"
   fanc_resolution: "10kb"
   fanc_balancing: "KR"

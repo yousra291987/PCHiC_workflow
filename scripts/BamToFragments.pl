@@ -34,12 +34,13 @@ my %coord2index;
 open IN,$rmap or die $!;
 while (my $line = <IN>) {
 	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
-	my $chr = $f[0];
-	$chr = "chr".$f[0] unless ($f[0] =~ /chr/);
+	my $chr = $f[0];                 # keep the rmap chromosome name exactly as given
+	(my $key = $chr) =~ s/^chr//i;   # normalized key so "chr1" (bed) and "1" (rmap) match
 	$frags{$f[3]} = {chrom=>$chr, start=>$f[1], end=>$f[2], probe=>$f[4]};
-	
-	$coord2index{$chr}->{$f[3]} = {start=>$f[1], end=>$f[2], probe=>$f[4]};
+
+	$coord2index{$key}->{$f[3]} = {start=>$f[1], end=>$f[2], probe=>$f[4]};
 }
 
 close IN or die $!;
@@ -49,8 +50,8 @@ foreach my $chrom(keys %coord2index) {
 }
 
 print "Traversing bedpe file...\n";
-my $reads;
-my $kept;
+my $reads = 0;
+my $kept = 0;
 my %ints;
 my %intrep;
 open IN,$bedpe or die $!;
@@ -58,12 +59,14 @@ while (my $line = <IN>) {
 	++$reads;
 	print $reads,"...\n" if ($reads % 1000000 == 0);
 	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
 	#next unless ($f[$leftchrcol] eq $f[$rightchrcol]);
 	my $leftfrag = coordtofrag($f[$leftchrcol],$f[$leftcoordcol]);
 	next if ($leftfrag == -1);
 	my $rightfrag = coordtofrag($f[$rightchrcol],$f[$rightcoordcol]);
 	next if ($rightfrag == -1);
+	++$kept;
 	my $bcount = 0;
 	if ((exists $ints{$leftfrag}->{$rightfrag}) ||(exists $ints{$rightfrag}->{$leftfrag}) ) {
 		++$ints{$leftfrag}->{$rightfrag};
@@ -88,8 +91,8 @@ foreach my $bait(@baitsort) {
 	my @oesort = sort {$a <=> $b} keys %{$ints{$bait}};
 	$cis += scalar @oesort;
 	foreach my $oe(@oesort) {
-		print OUT $bait,"\t",$frags{$bait}->{probe};
-		print OUT "\t",$oe,"\t",$frags{$oe}->{probe};
+		print OUT $bait,"\t",($frags{$bait}->{probe} // "");
+		print OUT "\t",$oe,"\t",($frags{$oe}->{probe} // "");
 		print OUT "\t",$ints{$bait}->{$oe},"\n";
 	}
 }
@@ -125,8 +128,14 @@ sub binary_search {
 
 sub coordtofrag {
 	my ($chr,$coord) = (@_);
-	my $index_p = binary_search($coord2index{$chr}->{sorted},$coord);
-	return (-1) if ($index_p == -1);
-	my $frag = $coord2index{$chr}->{sorted}[$index_p];
-	return($frag);
+	(my $key = $chr) =~ s/^chr//i;   # match the normalized rmap keys
+	my $sorted = $coord2index{$key}->{sorted};
+	# Chromosome not present in the rmap (e.g. a scaffold or a naming mismatch):
+	# skip the read quietly instead of flooding the log with "uninitialized value"
+	# warnings for every read, which previously produced multi-GB log files.
+	return (-1) unless (defined $sorted && @$sorted);
+	my $index_p = binary_search($sorted,$coord);
+	return (-1) unless (defined $index_p && $index_p != -1);
+	my $frag = $sorted->[$index_p];
+	return (defined $frag ? $frag : -1);
 }
