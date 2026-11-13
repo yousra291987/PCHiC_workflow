@@ -10,9 +10,11 @@
 # have the exact shape downstream tools require.
 #
 # It guards the concrete regressions we have hit:
-#   * BamToFragments.pl must emit the 11-column CHiCMaxima .mat.
-#   * 03_Generate_hic_and_TADs.r must select (ID_Bait, ID_OE, N) so every PRE
-#     row has 11 columns — NOT (ID_Bait, start_Bait, Bait_name).
+#   * BamToFragments.pl must emit the 5-column .mat (Fragment1 ProbeF1 Fragment2
+#     ProbeF2 N) with ProbeF1/ProbeF2 as 0/1 bait flags — not empty — so the
+#     capture-efficiency step can compute P0/P1/P2 instead of all zeros.
+#   * 03_Generate_hic_and_TADs.r must select (Fragment1, Fragment2, N) so every
+#     PRE row has 11 columns.
 #   * Bam2Juicer.pl must never write a short/malformed PRE row.
 #   * align2ibed.pl must accept its 8 args and produce an .ibed.
 #
@@ -38,7 +40,14 @@ cols=$(head -1 "$mat" | awk -F'\t' '{print NF}')
 [ "$cols" -eq 5 ] || fail ".mat header has $cols columns, expected 5" "$mat"
 [ "$(wc -l < "$mat")" -ge 2 ] || fail ".mat produced no interaction rows" "$mat"
 head -1 "$mat" | grep -q 'Fragment1' || fail ".mat missing expected Fragment1 header" "$mat"
-pass ".mat is the 5-column BamToFragments table with interactions"
+# ProbeF1/ProbeF2 (cols 2 & 4) must be 0/1 bait flags, not empty: the
+# capture-efficiency step reads them and needs real flags (regression: they were
+# taken from a non-existent 5th rmap column -> empty -> P0=P1=P2=0, empty plot).
+badflag=$(tail -n +2 "$mat" | awk -F'\t' '($2!="0"&&$2!="1")||($4!="0"&&$4!="1"){c++} END{print c+0}')
+[ "$badflag" -eq 0 ] || fail "ProbeF1/ProbeF2 are not all 0/1 bait flags" "$mat"
+tail -n +2 "$mat" | awk -F'\t' '$2==1||$4==1{f++} END{exit !(f>0)}' \
+  || fail ".mat has no fragment flagged as a bait (baitmap lookup failed)" "$mat"
+pass ".mat is the 5-column table with 0/1 bait flags and interactions"
 
 echo "== 2) 03_Generate_hic_and_TADs.r (real script, fake java) -> PRE + .hic =="
 pre="$work/toy_pre.txt"
@@ -92,6 +101,25 @@ perl "$root/scripts/BamToFragments.pl" \
 [ "$(wc -l < "$mm_mat")" -ge 2 ] || fail "chr-mismatch: .mat has no interactions (lookup failed)" "$mm_mat"
 if grep -q "uninitialized" "$warn"; then fail "chr-mismatch: coordtofrag still floods warnings" "$warn"; fi
 pass "chr-naming difference handled, with no per-read warnings"
+
+echo "== 6) 00_CaptureHiC_CaptureEfficiency_Control.r -> non-empty P0/P1/P2 =="
+# Regression: with empty ProbeF1/ProbeF2 flags the stat was Total=N, P0=P1=P2=0
+# and the CaptureEfficiency.pdf barplot was blank. P0+P1+P2 must equal Total and
+# at least one captured (P1/P2) category must be > 0.
+cedir="$work/ce"
+mkdir -p "$cedir"
+stat="$cedir/toy_CaptureEfficiency.stat"
+Rscript "$root/scripts/00_CaptureHiC_CaptureEfficiency_Control.r" \
+  --dir "$cedir" --sample toy --mat "$mat" --stats "$stat" >/dev/null 2>&1
+[ -s "$stat" ] || fail "capture-efficiency stat not created"
+tot=$(awk -F': ' '/^Total:/{print $2}' "$stat")
+p0=$(awk -F': ' '/^P0:/{print $2}' "$stat")
+p1=$(awk -F': ' '/^P1:/{print $2}' "$stat")
+p2=$(awk -F': ' '/^P2:/{print $2}' "$stat")
+[ "$((p0 + p1 + p2))" -eq "$tot" ] || fail "P0+P1+P2 ($((p0+p1+p2))) != Total ($tot)" "$stat"
+[ "$((p1 + p2))" -gt 0 ] || fail "capture efficiency is 0 (P1=P2=0): bait flags not read" "$stat"
+[ -s "$cedir/toy_CaptureEfficiency.pdf" ] || fail "CaptureEfficiency.pdf not created"
+pass "capture efficiency computes real P0/P1/P2 and a non-empty plot"
 
 echo
 echo "ALL DOWNSTREAM SMOKE CHECKS PASSED"
