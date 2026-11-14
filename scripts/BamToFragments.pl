@@ -16,16 +16,23 @@ my $leftcoordcol = $ARGV[5]-1;
 my $rightchrcol = $ARGV[6]-1;
 my $rightcoordcol = $ARGV[7]-1;
 
-#Lookup between baitID and baitname
-#print "Traversing bait map...\n";
-#my %baits;
-#open IN,$bmap or die $!;
-#while (my $line = <IN>) {
-#	chomp $line;
-#	my @f = split(/\t/,$line);
-#	$baits{$f[3]} = $f[4];
-#}
-#close IN or die $!;
+# Captured (bait) fragments, keyed by fragment id. Used to flag each end of an
+# interaction as a probe (1) or not (0) in the .mat's ProbeF1/ProbeF2 columns.
+# The capture-efficiency step (00_CaptureHiC_CaptureEfficiency_Control.r) reads
+# those flags from columns 2 and 4; a standard CHiCAGO .rmap has only 4 columns
+# (chr start end fragID) and no probe flag, so taking it from the rmap left those
+# columns empty -> P0/P1/P2 all 0 and an empty CaptureEfficiency plot.
+print "Traversing bait map...\n";
+my %baits;
+open IN,$bmap or die $!;
+while (my $line = <IN>) {
+	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
+	my @f = split(/\t/,$line);
+	next unless (defined $f[3] && $f[3] ne "");
+	$baits{$f[3]} = 1;
+}
+close IN or die $!;
 
 #Fragment info
 print "Traversing fragment map...\n";
@@ -91,8 +98,8 @@ foreach my $bait(@baitsort) {
 	my @oesort = sort {$a <=> $b} keys %{$ints{$bait}};
 	$cis += scalar @oesort;
 	foreach my $oe(@oesort) {
-		print OUT $bait,"\t",($frags{$bait}->{probe} // "");
-		print OUT "\t",$oe,"\t",($frags{$oe}->{probe} // "");
+		print OUT $bait,"\t",(exists $baits{$bait} ? 1 : 0);
+		print OUT "\t",$oe,"\t",(exists $baits{$oe} ? 1 : 0);
 		print OUT "\t",$ints{$bait}->{$oe},"\n";
 	}
 }
