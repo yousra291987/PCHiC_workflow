@@ -121,5 +121,43 @@ p2=$(awk -F': ' '/^P2:/{print $2}' "$stat")
 [ -s "$cedir/toy_CaptureEfficiency.pdf" ] || fail "CaptureEfficiency.pdf not created"
 pass "capture efficiency computes real P0/P1/P2 and a non-empty plot"
 
+echo "== 7) 02_ChiCMaxima.r: builds .ibed, skips cleanly without a caller, calls loops with one =="
+# The chicmaxima step must always build the cis .ibed, and only run the
+# ChiCMaxima loop caller when tools.chicmaxima_caller is configured. Here a tiny
+# stub stands in for ChiCMaxima_Caller.r so both paths are exercised.
+cmxdir="$work/cmx"
+mkdir -p "$cmxdir"
+cp "$fx/toy.bedpe" "$cmxdir/toy.hicup.bed"   # 02_ChiCMaxima.r globs *.hicup.bed
+cmx_ibed="$cmxdir/toy_Cis.ibed"
+
+# 7a) no caller configured -> .ibed produced, loop calling skipped with a note
+noloop_log="$work/cmx_noloop.log"
+Rscript "$root/scripts/02_ChiCMaxima.r" \
+  --dir "$cmxdir" --sample toy \
+  --rmap "$fx/toy.rmap" --baitmap "$fx/toy.baitmap" \
+  --perl_bin perl --align2ibed "$root/scripts/align2ibed.pl" \
+  --ibed_out "$cmx_ibed" >"$noloop_log" 2>&1
+[ -s "$cmx_ibed" ] || fail "chicmaxima: .ibed not produced" "$noloop_log"
+grep -qi "not configured" "$noloop_log" || fail "chicmaxima: missing skip note when no caller set" "$noloop_log"
+[ ! -e "$cmxdir/toy_ChiCMaxima_interactions.ibed" ] || fail "chicmaxima: loops written although no caller configured"
+pass "builds .ibed and skips loop calling cleanly when no caller is set"
+
+# 7b) caller configured -> loops produced with the extra Enrichment column
+loop_log="$work/cmx_loop.log"
+Rscript "$root/scripts/02_ChiCMaxima.r" \
+  --dir "$cmxdir" --sample toy \
+  --rmap "$fx/toy.rmap" --baitmap "$fx/toy.baitmap" \
+  --perl_bin perl --align2ibed "$root/scripts/align2ibed.pl" \
+  --ibed_out "$cmx_ibed" \
+  --chicmaxima_caller "$here/stub_chicmaxima_caller.r" \
+  --loops_prefix "$cmxdir/toy_ChiCMaxima" \
+  --window_size 20 --loess_span 0.05 --cis_window 1500000 >"$loop_log" 2>&1
+loops="$cmxdir/toy_ChiCMaxima_interactions.ibed"
+[ -s "$loops" ] || fail "chicmaxima: caller configured but no interactions file" "$loop_log"
+head -1 "$loops" | grep -q 'Enrichment' || fail "chicmaxima: loops file missing Enrichment column" "$loops"
+lcols=$(head -1 "$loops" | awk -F'\t' '{print NF}')
+[ "$lcols" -eq 12 ] || fail "chicmaxima: loops header has $lcols columns, expected 12" "$loops"
+pass "runs the ChiCMaxima loop caller and writes called interactions"
+
 echo
 echo "ALL DOWNSTREAM SMOKE CHECKS PASSED"

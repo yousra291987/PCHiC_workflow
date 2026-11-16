@@ -338,6 +338,11 @@ rule chicmaxima:
         rscript    = TOOLS.get("rscript","Rscript"),
         perl       = TOOLS.get("perl","perl"),
         align2ibed = TOOLS.get("align2ibed","scripts/align2ibed.pl"),
+        # ChiCMaxima loop caller (optional). Empty -> produce the .ibed input only.
+        cmx_caller = TOOLS.get("chicmaxima_caller",""),
+        cmx_window = config.get("params", {}).get("chicmaxima_window", 50),
+        cmx_span   = config.get("params", {}).get("chicmaxima_loess_span", 0.05),
+        cmx_cis    = config.get("params", {}).get("chicmaxima_cis_window", 1500000),
     output:
         rout = "logs/chicmaxima/{sample}.Rout",
         ibed = OUTDIR + "/{sample}/{sample}_Cis.ibed",
@@ -357,6 +362,11 @@ rule chicmaxima:
           --perl_bin "{params.perl}" \
           --align2ibed "{params.align2ibed}" \
           --ibed_out "{output.ibed}" \
+          --chicmaxima_caller "{params.cmx_caller}" \
+          --loops_prefix "{params.outdir}/{wildcards.sample}/{wildcards.sample}_ChiCMaxima" \
+          --window_size {params.cmx_window} \
+          --loess_span {params.cmx_span} \
+          --cis_window {params.cmx_cis} \
           > {log} 2>&1
         echo "OK" > {output.rout}
         """
