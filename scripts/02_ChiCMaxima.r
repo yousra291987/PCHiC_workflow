@@ -15,7 +15,20 @@ option_list <- list(
   make_option("--baitmap",    type="character", help="Design .baitmap file"),
   make_option("--perl_bin",   type="character", default="perl", help="Perl binary"),
   make_option("--align2ibed", type="character", help="Path to align2ibed.pl"),
-  make_option("--ibed_out",   type="character", help="Output CIS .ibed path (e.g., results/<sample>/<sample>_Cis.ibed)")
+  make_option("--ibed_out",   type="character", help="Output CIS .ibed path (e.g., results/<sample>/<sample>_Cis.ibed)"),
+  # ChiCMaxima loop caller (optional). ChiCMaxima is a separate tool
+  # (github.com/yousra291987/ChiCMaxima); point --chicmaxima_caller at its
+  # ChiCMaxima_Caller.r to call loops here. Empty -> produce the .ibed only.
+  make_option("--chicmaxima_caller", type="character", default="",
+              help="Path to ChiCMaxima_Caller.r; empty = produce the .ibed input only"),
+  make_option("--loops_prefix", type="character", default="",
+              help="Output prefix for the loop caller; writes <prefix>_interactions.ibed [default: <dir>/<sample>_ChiCMaxima]"),
+  make_option("--window_size", type="integer", default=50L,
+              help="ChiCMaxima -w: sliding-window size in restriction fragments [default %default]"),
+  make_option("--loess_span", type="double", default=0.05,
+              help="ChiCMaxima -s: LOESS span for the virtual-4C smoothing [default %default]"),
+  make_option("--cis_window", type="integer", default=1500000L,
+              help="ChiCMaxima -c: cis window in bp from the bait start [default %default]")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
@@ -63,3 +76,46 @@ if (!file.exists(opt$ibed_out) || file.info(opt$ibed_out)$size == 0) {
 }
 
 message("Done. IBED written to: ", opt$ibed_out)
+
+# -----------------------------------------------------------------------------
+# Optional: run the ChiCMaxima loop caller on the .ibed.
+# ChiCMaxima is a separate tool (github.com/yousra291987/ChiCMaxima). When
+# tools.chicmaxima_caller is set we call loops here; when it is empty we stop
+# after the .ibed input, with a clear note, so the step still succeeds.
+# -----------------------------------------------------------------------------
+caller <- opt$chicmaxima_caller
+if (!nzchar(caller)) {
+  message("[ChiCMaxima] loop caller not configured (tools.chicmaxima_caller is empty); ",
+          "produced the .ibed input only.")
+  message("  To call loops in the pipeline, set tools.chicmaxima_caller to the ",
+          "path of your ChiCMaxima_Caller.r.")
+  quit(save = "no", status = 0)
+}
+if (!file.exists(caller)) {
+  stop("tools.chicmaxima_caller is set but the file was not found: ", caller)
+}
+
+prefix <- opt$loops_prefix
+if (!nzchar(prefix)) prefix <- file.path(sample_dir, paste0(opt$sample, "_ChiCMaxima"))
+
+# Use the same Rscript that is running this wrapper, so the caller runs in the
+# same R environment (no reliance on a second Rscript being on PATH).
+rscript_bin <- file.path(R.home("bin"), "Rscript")
+
+loop_cmd <- sprintf('"%s" "%s" -i "%s" -o "%s" -w %d -s %s -c %d',
+                    rscript_bin, caller, opt$ibed_out, prefix,
+                    as.integer(opt$window_size),
+                    format(opt$loess_span, scientific = FALSE),
+                    as.integer(opt$cis_window))
+message("=== ChiCMaxima loop calling ===")
+message("[ChiCMaxima_Caller] ", loop_cmd)
+status <- system(loop_cmd)
+if (status != 0) stop("ChiCMaxima_Caller.r failed with status: ", status)
+
+loops_out <- paste0(prefix, "_interactions.ibed")
+if (!file.exists(loops_out) || file.info(loops_out)$size == 0) {
+  stop("ChiCMaxima ran but produced no interactions file: ", loops_out)
+}
+n_lines <- tryCatch(length(readLines(loops_out)), error = function(e) NA_integer_)
+message("Done. ChiCMaxima loops: ", loops_out,
+        if (!is.na(n_lines)) paste0(" (", n_lines, " lines incl. header)") else "")

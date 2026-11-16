@@ -55,6 +55,11 @@ tools:
   chicago_bam2chicago: ""                  # e.g. "/path/to/chicagoTools/bam2chicago.sh"
   chicago_make_design: ""                  # e.g. "/path/to/chicagoTools/makeDesignFiles_py3.py"
   python: "python"                         # used by makeDesignFiles_py3.py
+  # ChiCMaxima loop caller (github.com/yousra291987/ChiCMaxima). The chicmaxima
+  # step always builds the cis .ibed input; set this to your ChiCMaxima_Caller.r
+  # to ALSO call loops (-> <sample>_ChiCMaxima_interactions.ibed). Leave empty to
+  # stop at the .ibed input with a clear note.
+  chicmaxima_caller: ""                    # e.g. "/path/to/ChiCMaxima/scripts/ChiCMaxima_Caller.r"
 
 # CHiCAGO options
 chicago:
@@ -84,6 +89,10 @@ params:
   fanc_resolution: "10kb"
   fanc_balancing: "KR"
   fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
+  # ChiCMaxima loop-caller parameters (used only when tools.chicmaxima_caller is set).
+  chicmaxima_window: 50          # -w: sliding window in restriction fragments
+  chicmaxima_loess_span: 0.05    # -s: LOESS span for virtual-4C smoothing
+  chicmaxima_cis_window: 1500000 # -c: cis window in bp from the bait start
 
 threads:
   default: 4

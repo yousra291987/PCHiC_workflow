@@ -38,6 +38,7 @@ tools:
   chicago_bam2chicago: ""               # e.g. "/path/to/chicagoTools/bam2chicago.sh"
   chicago_make_design: ""               # e.g. "/path/to/chicagoTools/makeDesignFiles_py3.py"
   python: "python"
+  chicmaxima_caller: ""                 # path to ChiCMaxima_Caller.r; empty = build the .ibed only
 
 chicago:
   force_make_design: false
@@ -59,6 +60,9 @@ params:
   fanc_resolution: "10kb"
   fanc_balancing: "KR"
   fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
+  chicmaxima_window: 50
+  chicmaxima_loess_span: 0.05
+  chicmaxima_cis_window: 1500000
 
 threads:
   default: 4

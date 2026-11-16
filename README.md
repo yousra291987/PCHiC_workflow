@@ -19,7 +19,7 @@ It performs all major processing and analysis steps — from read mapping and QC
 | **1. HiCUP QC** | Maps paired reads, filters invalid di-tags | [`HiCUP`](https://www.bioinformatics.babraham.ac.uk/projects/hicup/) |
 | **2. Capture Efficiency** | Computes P0/P1/P2 statistics from `.mat` | R / data.table |
 | **3. Chicago** | Detects significant promoter interactions | [`Chicago`](https://bioconductor.org/packages/release/bioc/html/Chicago.html) |
-| **4. ChiCMaxima** | Generates interaction BED (IBED) for visualization | [`ChiCMaxima`](https://github.com/yousra291987/ChiCMaxima) |
+| **4. ChiCMaxima** | Builds the cis IBED and (optionally) calls loops | [`ChiCMaxima`](https://github.com/yousra291987/ChiCMaxima) |
 | **5. Hi-C generation** | Converts matrices to `.hic` for Juicebox / Arrowhead | [`juicer_tools`](https://github.com/aidenlab/juicer/wiki/Juicer-Tools-Quick-Start) |
 | **6. Insulation Score** | Calculates domain insulation using FAN-C | [`FAN-C`](https://github.com/vaquerizaslab/fanc) |
 
@@ -328,9 +328,38 @@ All results are written under results/<SampleName>/.
 | `*.mat`                    | Contact matrix for Chicago / QC            |
 | `*_CaptureEfficiency.stat` | Capture efficiency statistics              |
 | `*_Chicago_output/`        | Chicago outputs + significant interactions |
-| `*_Cis.ibed`               | ChiCMaxima IBED file                       |
+| `*_Cis.ibed`               | ChiCMaxima IBED input (cis interactions)   |
+| `*_ChiCMaxima_interactions.ibed` | ChiCMaxima called loops (when the caller is configured) |
 | `*.hic`                    | Final Juicebox-compatible contact map      |
 | `*.insulation`             | Domain insulation profile (FAN-C)          |
+
+### Calling loops with ChiCMaxima
+
+The `chicmaxima` step always builds the cis `*_Cis.ibed` input. ChiCMaxima itself
+is a **separate tool** ([github.com/yousra291987/ChiCMaxima](https://github.com/yousra291987/ChiCMaxima)),
+so to call loops **within the pipeline** set `tools.chicmaxima_caller` to the path
+of its `ChiCMaxima_Caller.r`:
+
+```yaml
+tools:
+  chicmaxima_caller: "/path/to/ChiCMaxima/scripts/ChiCMaxima_Caller.r"
+params:
+  chicmaxima_window: 50          # -w  sliding window (restriction fragments)
+  chicmaxima_loess_span: 0.05    # -s  LOESS span
+  chicmaxima_cis_window: 1500000 # -c  cis window (bp) from the bait start
+```
+
+The step then writes `<sample>_ChiCMaxima_interactions.ibed` (called loops, with an
+added `Enrichment` column) and `<sample>_ChiCMaxima_poorlycovered.txt`. If
+`chicmaxima_caller` is left empty, the step stops after the `*_Cis.ibed` input and
+logs a note — you can still run the caller by hand:
+
+```bash
+Rscript /path/to/ChiCMaxima_Caller.r \
+  -i results/<sample>/<sample>_Cis.ibed \
+  -o results/<sample>/<sample>_ChiCMaxima \
+  -w 50 -s 0.05 -c 1500000
+```
 
 
 ## 🧠 Notes
