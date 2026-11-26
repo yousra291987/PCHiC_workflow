@@ -340,7 +340,7 @@ rule chicmaxima:
         align2ibed = TOOLS.get("align2ibed","scripts/align2ibed.pl"),
         # ChiCMaxima loop caller (optional). Empty -> produce the .ibed input only.
         cmx_caller = TOOLS.get("chicmaxima_caller",""),
-        cmx_window = config.get("params", {}).get("chicmaxima_window", 50),
+        cmx_window = config.get("params", {}).get("chicmaxima_window", 20),
         cmx_span   = config.get("params", {}).get("chicmaxima_loess_span", 0.05),
         cmx_cis    = config.get("params", {}).get("chicmaxima_cis_window", 1500000),
     output:

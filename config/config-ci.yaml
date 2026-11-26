@@ -60,7 +60,7 @@ params:
   fanc_resolution: "10kb"
   fanc_balancing: "KR"
   fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
-  chicmaxima_window: 50
+  chicmaxima_window: 20
   chicmaxima_loess_span: 0.05
   chicmaxima_cis_window: 1500000
 

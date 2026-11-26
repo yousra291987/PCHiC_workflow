@@ -80,12 +80,32 @@ bad=$(awk -F'\t' 'NF!=11{c++} END{print c+0}' "$crlf_pre")
 [ "$bad" -eq 0 ] || fail "$bad PRE row(s) from a CRLF rmap do not have 11 columns" "$crlf_pre"
 pass "CRLF design files still yield well-formed 11-column PRE rows"
 
-echo "== 4) align2ibed.pl -> .ibed =="
+echo "== 4) align2ibed.pl -> .ibed, with a usable Bait_name per bait =="
 ibed="$work/toy.ibed"
 perl "$root/scripts/align2ibed.pl" \
   "$fx/toy.bedpe" "$fx/toy.baitmap" "$fx/toy.rmap" "$ibed" 1 2 4 5 >/dev/null
 [ -s "$ibed" ] || fail ".ibed not created or empty"
-pass ".ibed was produced"
+# ChiCMaxima groups by Bait_name (col 5); a named baitmap must yield real names.
+ndist=$(tail -n +2 "$ibed" | cut -f5 | sort -u | grep -c .)
+[ "$ndist" -ge 2 ] || fail "named baitmap gave $ndist distinct Bait_name(s), expected >=2" "$ibed"
+tail -n +2 "$ibed" | cut -f5 | grep -q 'baitA' || fail ".ibed Bait_name is not the baitmap name" "$ibed"
+pass ".ibed uses the baitmap names ($ndist distinct baits)"
+
+# Regression: a baitmap with an empty/constant column 5 (e.g. all '0') would make
+# every row share one Bait_name, so ChiCMaxima collapses to a single bait and
+# returns ~1 interaction. align2ibed must fall back to the bait fragment id.
+zero_bm="$work/toy_zero.baitmap"
+awk -F'\t' 'BEGIN{OFS="\t"}{$5="0"; print}' "$fx/toy.baitmap" > "$zero_bm"
+zero_ibed="$work/toy_zero.ibed"
+zwarn="$work/a2i_zero.warn"
+perl "$root/scripts/align2ibed.pl" \
+  "$fx/toy.bedpe" "$zero_bm" "$fx/toy.rmap" "$zero_ibed" 1 2 4 5 2>"$zwarn" >/dev/null
+zdist=$(tail -n +2 "$zero_ibed" | cut -f5 | sort -u | grep -c .)
+[ "$zdist" -ge 2 ] || fail "constant baitmap col5 not rescued: $zdist distinct Bait_name(s)" "$zero_ibed"
+[ "$(tail -n +2 "$zero_ibed" | cut -f5 | sort -u | grep -c '^0$')" -eq 0 ] \
+  || fail "constant baitmap col5 still emitted '0' as a Bait_name" "$zero_ibed"
+grep -qi "fragment IDs as Bait_name" "$zwarn" || fail "no warning emitted for an unusable baitmap col5" "$zwarn"
+pass "unusable baitmap names fall back to per-bait fragment ids (no single-bait collapse)"
 
 echo "== 5) BamToFragments.pl tolerates chr-naming differences (bed '1' vs rmap 'chr1') =="
 # Regression: a real run on a non-'chr' assembly (e.g. chicken ggal7) had the
