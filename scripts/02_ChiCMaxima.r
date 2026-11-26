@@ -23,7 +23,7 @@ option_list <- list(
               help="Path to ChiCMaxima_Caller.r; empty = produce the .ibed input only"),
   make_option("--loops_prefix", type="character", default="",
               help="Output prefix for the loop caller; writes <prefix>_interactions.ibed [default: <dir>/<sample>_ChiCMaxima]"),
-  make_option("--window_size", type="integer", default=50L,
+  make_option("--window_size", type="integer", default=20L,
               help="ChiCMaxima -w: sliding-window size in restriction fragments [default %default]"),
   make_option("--loess_span", type="double", default=0.05,
               help="ChiCMaxima -s: LOESS span for the virtual-4C smoothing [default %default]"),

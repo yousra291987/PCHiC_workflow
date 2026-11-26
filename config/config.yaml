@@ -90,7 +90,7 @@ params:
   fanc_balancing: "KR"
   fanc_windows: ["0.5mb","1mb","1.5mb","2mb","2.5mb"]
   # ChiCMaxima loop-caller parameters (used only when tools.chicmaxima_caller is set).
-  chicmaxima_window: 50          # -w: sliding window in restriction fragments
+  chicmaxima_window: 20          # -w: sliding window in restriction fragments (ChiCMaxima default)
   chicmaxima_loess_span: 0.05    # -s: LOESS span for virtual-4C smoothing
   chicmaxima_cis_window: 1500000 # -c: cis window in bp from the bait start
 

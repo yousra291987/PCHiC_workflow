@@ -22,10 +22,27 @@ my %baits;
 open IN,$bmap or die $!;
 while (my $line = <IN>) {
 	chomp $line;
+	$line =~ s/\r$//;   # tolerate Windows (CRLF) line endings
 	my @f = split(/\t/,$line);
-	$baits{$f[3]} = $f[4];
+	$baits{$f[3]} = (defined $f[4] ? $f[4] : "");
 }
 close IN or die $!;
+
+# ChiCMaxima_Caller.r groups interactions by the Bait_name column (column 5) and
+# calls one virtual-4C profile per unique name. If the baitmap has no usable
+# names in column 5 (empty, or a single constant such as "0"), every bait shares
+# one name, ChiCMaxima sees a SINGLE bait and returns ~1 interaction for the whole
+# genome. Detect that and fall back to the bait fragment id as the name, so each
+# bait is grouped on its own.
+my %distinct_names;
+for my $n (values %baits) { $distinct_names{$n}++ if (defined $n && $n ne ""); }
+my $names_unusable = (scalar(keys %distinct_names) <= 1);
+if ($names_unusable) {
+	print STDERR "[align2ibed] WARNING: baitmap column 5 has ",
+		scalar(keys %distinct_names),
+		" distinct bait name(s); using bait fragment IDs as Bait_name so ChiCMaxima ",
+		"groups per bait instead of collapsing to one.\n";
+}
 
 #Fragment info
 print "Traversing fragment map...\n";
@@ -98,9 +115,13 @@ my @baitsort = sort {$a <=> $b} keys %ints;
 foreach my $bait(@baitsort) {
 	my @oesort = sort {$a <=> $b} @{$intrep{$bait}};
 	$cis += scalar @oesort;
+	# Bait_name: the baitmap name when usable, otherwise the bait fragment id
+	# (unique per bait) so ChiCMaxima groups each bait separately.
+	my $bname = (!$names_unusable && defined $baits{$bait} && $baits{$bait} ne "")
+		? $baits{$bait} : $bait;
 	foreach my $oe(@oesort) {
 		print OUT $bait,"\t",$frags{$bait}->{chrom},"\t",$frags{$bait}->{start},"\t",$frags{$bait}->{end};
-		print OUT "\t",$baits{$bait},"\t",$oe,"\t",$frags{$oe}->{chrom},"\t",$frags{$oe}->{start},"\t",$frags{$oe}->{end};
+		print OUT "\t",$bname,"\t",$oe,"\t",$frags{$oe}->{chrom},"\t",$frags{$oe}->{start},"\t",$frags{$oe}->{end};
 		print OUT "\t.\t",$ints{$bait}->{$oe},"\n";
 	}
 }

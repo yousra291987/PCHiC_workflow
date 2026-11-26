@@ -344,7 +344,7 @@ of its `ChiCMaxima_Caller.r`:
 tools:
   chicmaxima_caller: "/path/to/ChiCMaxima/scripts/ChiCMaxima_Caller.r"
 params:
-  chicmaxima_window: 50          # -w  sliding window (restriction fragments)
+  chicmaxima_window: 20          # -w  sliding window (restriction fragments)
   chicmaxima_loess_span: 0.05    # -s  LOESS span
   chicmaxima_cis_window: 1500000 # -c  cis window (bp) from the bait start
 ```
@@ -358,8 +358,17 @@ logs a note — you can still run the caller by hand:
 Rscript /path/to/ChiCMaxima_Caller.r \
   -i results/<sample>/<sample>_Cis.ibed \
   -o results/<sample>/<sample>_ChiCMaxima \
-  -w 50 -s 0.05 -c 1500000
+  -w 20 -s 0.05 -c 1500000
 ```
+
+> **Bait names matter.** ChiCMaxima groups interactions by the `Bait_name` column
+> (column 5 of the `.ibed`), calling one profile per bait. If the baitmap has no
+> real names there (an empty or constant column 5, e.g. all `0`), every bait would
+> share one name and ChiCMaxima would collapse the whole genome into a single bait
+> (~1 interaction). `align2ibed.pl` guards against this: when column 5 is empty or
+> constant it falls back to the bait **fragment id** as the name (and prints a
+> warning), so each bait is grouped separately. For gene-labelled output, give the
+> baitmap real bait/promoter names in column 5.
 
 
 ## 🧠 Notes
